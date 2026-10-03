@@ -877,7 +877,11 @@ def test_no_endpoint_path_is_a_trading_endpoint():
 
 
 def test_the_public_api_is_read_only():
-    """The public surface is pinned exactly, so a mutating method cannot be added quietly."""
+    """The public surface is pinned exactly, so a mutating method cannot be added quietly.
+
+    `default_depth` was added here for the dashboard: venues disagree about
+    which ladder sizes exist, so the caller must not hard-code one.
+    """
     client = BinanceMarketData(transport=FakeTransport())
     public = {name for name in dir(client) if not name.startswith('_')}
     assert public == {
@@ -886,6 +890,7 @@ def test_the_public_api_is_read_only():
         'backoff_base',
         'base_url',
         'candles',
+        'default_depth',
         'max_attempts',
         'max_candles',
         'name',
@@ -895,6 +900,27 @@ def test_the_public_api_is_read_only():
         'timeout',
         'transport',
     }
+
+
+def test_default_depth_is_advertised_by_every_supported_exchange():
+    for exchange in supported_exchanges():
+        cls = type(get_client(exchange, transport=FakeTransport()))
+        assert cls.default_depth() in cls.allowed_book_depths()
+
+
+def test_default_depth_differs_per_venue_because_the_ladders_do():
+    """Binance offers 20 levels; Bybit does not, which is why this is a method."""
+    assert BinanceMarketData.default_depth() == 20
+    assert BybitMarketData.default_depth() == 50
+
+
+@pytest.mark.parametrize(
+    'cls,payload', [(BinanceMarketData, {'bids': [['1', '1']], 'asks': [['2', '1']]})]
+)
+def test_order_book_with_no_depth_uses_the_venue_default(cls, payload):
+    client, transport, *_ = make_client(cls, ok(payload))
+    client.order_book('BTCUSDT')
+    assert transport.params['limit'] == cls.default_depth()
 
 
 def test_read_only_notice_says_what_it_does():

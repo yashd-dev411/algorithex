@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algorithex &mdash; Live Market</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
+    --muted: #8b949e; --accent: #58a6ff; --up: #3fb950; --down: #f85149;
+    --warn: #d29922; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 26px 32px 18px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 4px; font-size: 21px; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  main { padding: 22px 32px 60px; max-width: 1400px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 18px; }
+  .card h2 { margin: 0 0 3px; font-size: 15px; }
+  .card .sub { margin: 0 0 14px; color: var(--muted); font-size: 12.5px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 12px; color: var(--muted); }
+  select, input { background: #0d1117; color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 12.5px; }
+  input { width: 130px; }
+  button { background: var(--accent); color: #04121f; border: 0; border-radius: 6px;
+    padding: 9px 17px; font-weight: 600; font-size: 13px; cursor: pointer; }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .readonly { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 11.5px;
+    font-weight: 700; letter-spacing: .04em; background: rgba(63,185,80,.15); color: var(--up); }
+  .grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; margin-top: 20px; }
+  @media (max-width: 1080px) { .grid { grid-template-columns: 1fr; } }
+  .price { font-family: var(--mono); font-size: 34px; font-weight: 600; letter-spacing: -0.02em; }
+  .up { color: var(--up); } .down { color: var(--down); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+           gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .stat .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .stat .v { font-family: var(--mono); font-size: 15px; margin-top: 3px; }
+  #chart { width: 100%; height: 220px; display: block; margin-top: 14px;
+           background: #0d1117; border: 1px solid var(--border); border-radius: 7px; }
+  .book { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;
+          font-family: var(--mono); font-size: 12px; }
+  .book h3 { margin: 0 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase;
+             letter-spacing: .05em; font-family: inherit; }
+  .lvl { position: relative; display: flex; justify-content: space-between; padding: 2px 6px;
+         border-radius: 3px; overflow: hidden; }
+  .lvl .bar { position: absolute; top: 0; bottom: 0; right: 0; opacity: .16; }
+  .lvl.bid .bar { background: var(--up); } .lvl.ask .bar { background: var(--down); }
+  .lvl span { position: relative; }
+  .mid-row { display: flex; justify-content: space-between; padding: 7px 6px; margin: 9px 0;
+             border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+             font-family: var(--mono); font-size: 12.5px; }
+  pre { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 11px;
+        overflow-x: auto; font-family: var(--mono); font-size: 12px; color: var(--warn);
+        white-space: pre-wrap; margin: 12px 0 0; }
+  .muted { color: var(--muted); }
+  .hint { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+  .foot { margin-top: 18px; font-size: 11.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Algorithex &mdash; Live Market <span class="readonly">READ ONLY</span></h1>
+  <p>Real public prices, depth and candles. This page cannot place, modify or cancel an order, and never sees a key.</p>
+</header>
+
+<main>
+  <section class="card">
+    <div class="controls">
+      <div class="field">
+        <label for="ex">Exchange</label>
+        <select id="ex"><option value="binance">Binance Spot</option><option value="bybit">Bybit Spot</option></select>
+      </div>
+      <div class="field">
+        <label for="sym">Symbol</label>
+        <input id="sym" value="BTC-USDT" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="tf">Timeframe</label>
+        <select id="tf">
+          <option>1m</option><option>5m</option><option>15m</option><option>1h</option>
+          <option selected>4h</option><option>1d</option><option>1w</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="bars">Candles</label>
+        <input id="bars" type="number" value="120" min="1" max="500" style="width:92px">
+      </div>
+      <button id="go">Load market</button>
+      <button id="auto" class="secondary">Auto-refresh: off</button>
+    </div>
+    <div id="err"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2 id="pairTitle">&mdash;</h2>
+      <p class="sub" id="pairSub">Waiting for data.</p>
+      <div class="price" id="last">&mdash;</div>
+      <div class="stats" id="stats"></div>
+      <svg id="chart" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg>
+      <div class="hint" id="chartHint"></div>
+    </section>
+
+    <section class="card">
+      <h2>Order book</h2>
+      <p class="sub">Real resting liquidity. The bar behind each level is its share of the deepest side.</p>
+      <div class="book">
+        <div><h3>Bids</h3><div id="bids"></div></div>
+        <div><h3>Asks</h3><div id="asks"></div></div>
+      </div>
+      <div class="mid-row" id="midRow"><span class="muted">spread</span><span>&mdash;</span></div>
+    </section>
+  </div>
+
+  <p class="foot" id="foot"></p>
+</main>
+
+<script>
+/**
+ * Session token comes from the same localStorage key the Nuxt dashboard already
+ * writes, so signing in at http://localhost:9000 is enough to unlock this page.
+ * The Authorization header is the raw token: the server compares it directly
+ * and does not strip a "Bearer " prefix.
+ */
+function token() {
+  try {
+    const main = localStorage.getItem('main');
+    if (main) {
+      const parsed = JSON.parse(main);
+      if (parsed && parsed.authToken) return parsed.authToken;
+    }
+    return localStorage.getItem('auth_token') || '';
+  } catch (e) {
+    return '';
+  }
+}
+function esc(s) {
+  return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+function fmt(n, dp) {
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  return Number(n).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+/** Prices span many orders of magnitude, so significant digits beat fixed ones. */
+function px(n) {
+  if (!isFinite(n)) return '—';
+  const a = Math.abs(n);
+  const dp = a >= 1000 ? 2 : a >= 1 ? 4 : 8;
+  return fmt(n, dp);
+}
+let timer = null;
+
+async function load() {
+  const btn = document.getElementById('go');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  document.getElementById('err').innerHTML = '';
+  try {
+    const auth = token();
+    if (!auth) {
+      throw new Error('Not signed in. Open http://localhost:9000 and sign in with your dashboard password, then reload this page.');
+    }
+    const body = {
+      exchange: document.getElementById('ex').value,
+      symbol: document.getElementById('sym').value.trim(),
+      interval: document.getElementById('tf').value,
+      candles: parseInt(document.getElementById('bars').value, 10) || 120,
+    };
+    const res = await fetch('/live/market', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': auth },
+      body: JSON.stringify(body),
+    });
+    const text = await res.text();
+    let d;
+    try { d = JSON.parse(text); } catch (e) { throw new Error('HTTP ' + res.status + ': ' + text.slice(0, 300)); }
+    if (!res.ok) throw new Error(d.detail || ('HTTP ' + res.status));
+    render(d);
+  } catch (e) {
+    document.getElementById('err').innerHTML = '<pre>' + esc(e.message) + '</pre>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function render(d) {
+  const t = d.ticker, b = d.order_book, c = d.candles;
+  const dir = t.change_24h_pct >= 0 ? 'up' : 'down';
+
+  document.getElementById('pairTitle').textContent = d.exchange.toUpperCase() + ' · ' + d.symbol + ' · ' + d.interval;
+  document.getElementById('pairSub').textContent =
+    c.count + ' candles, chronological=' + c.chronological + ', consistent=' + c.consistent;
+
+  const last = document.getElementById('last');
+  last.textContent = px(t.last);
+  last.className = 'price ' + dir;
+
+  document.getElementById('stats').innerHTML = [
+    ['Bid', px(t.bid), ''], ['Ask', px(t.ask), ''],
+    ['Mid', px(t.mid), ''], ['Spread', px(t.spread), ''],
+    ['Spread bps', fmt(t.spread_bps, 4), ''],
+    ['24h', (t.change_24h_pct >= 0 ? '+' : '') + fmt(t.change_24h_pct, 2) + '%', dir],
+    ['24h quote vol', fmt(t.quote_volume_24h, 0), ''],
+  ].map(s => '<div class="stat"><div class="k">' + s[0] + '</div><div class="v ' + s[2] + '">' + s[1] + '</div></div>').join('');
+
+  drawChart(c.closes);
+  document.getElementById('chartHint').textContent = c.count
+    ? 'Close of each ' + d.interval + ' bar, oldest to newest. Last close ' + px(c.closes[c.closes.length - 1]) + '.'
+    : '';
+
+  drawBook('bids', b.bids, 'up');
+  drawBook('asks', b.asks, 'down');
+  document.getElementById('midRow').innerHTML =
+    '<span class="muted">mid ' + px(b.mid) + ' · spread ' + px(b.spread) + '</span>' +
+    '<span class="' + (b.crossed ? 'down' : 'muted') + '">' +
+    (b.crossed ? 'CROSSED' : b.depth + ' levels each side') + '</span>';
+
+  const L = d.latency_ms;
+  document.getElementById('foot').textContent =
+    'Fetched ' + new Date(d.fetched_at_ms).toLocaleTimeString() +
+    ' · ticker ' + L.ticker + 'ms · book ' + L.order_book + 'ms · candles ' + L.candles + 'ms · ' + d.notice;
+}
+
+function drawChart(closes) {
+  const svg = document.getElementById('chart');
+  const W = 1000, H = 220, P = 8;
+  if (!closes || closes.length < 2) { svg.innerHTML = ''; return; }
+  const lo = Math.min.apply(null, closes), hi = Math.max.apply(null, closes);
+  const span = (hi - lo) || (hi * 0.0001) || 1;
+  const x = i => P + (i * (W - 2 * P)) / (closes.length - 1);
+  const y = v => H - P - ((v - lo) / span) * (H - 2 * P);
+  const rising = closes[closes.length - 1] >= closes[0];
+  const stroke = rising ? '#3fb950' : '#f85149';
+  let line = '';
+  for (let i = 0; i < closes.length; i++) line += (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(closes[i]).toFixed(1) + ' ';
+  const area = line + 'L' + x(closes.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + x(0).toFixed(1) + ' ' + (H - P) + ' Z';
+  const gid = 'g' + Math.random().toString(36).slice(2, 8);
+  svg.innerHTML =
+    '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="' + stroke + '" stop-opacity="0.28"/>' +
+    '<stop offset="100%" stop-color="' + stroke + '" stop-opacity="0"/></linearGradient></defs>' +
+    '<path d="' + area + '" fill="url(#' + gid + ')"/>' +
+    '<path d="' + line + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" vector-effect="non-scaling-stroke"/>' +
+    '<text x="' + P + '" y="' + (P + 12) + '" fill="#8b949e" font-size="12" font-family="monospace">' + px(hi) + '</text>' +
+    '<text x="' + P + '" y="' + (H - P - 2) + '" fill="#8b949e" font-size="12" font-family="monospace">' + px(lo) + '</text>';
+}
+
+function drawBook(id, levels, kind) {
+  const el = document.getElementById(id);
+  if (!levels.length) { el.innerHTML = '<div class="muted">empty</div>'; return; }
+  const max = Math.max.apply(null, levels.map(l => l.quantity)) || 1;
+  const shown = levels.slice(0, 14);
+  let cum = 0;
+  el.innerHTML = shown.map(l => {
+    cum += l.quantity;
+    return '<div class="lvl ' + kind + '"><span class="bar" style="width:' +
+      ((l.quantity / max) * 100).toFixed(1) + '%"></span>' +
+      '<span>' + px(l.price) + '</span><span class="muted">' + fmt(l.quantity, 4) + '</span>' +
+      '<span class="muted">' + fmt(cum, 3) + '</span></div>';
+  }).join('');
+}
+
+document.getElementById('go').onclick = load;
+document.getElementById('sym').addEventListener('keydown', e => { if (e.key === 'Enter') load(); });
+
+document.getElementById('auto').onclick = function () {
+  if (timer) {
+    clearInterval(timer); timer = null;
+    this.textContent = 'Auto-refresh: off';
+  } else {
+    load();
+    timer = setInterval(load, 10000);
+    this.textContent = 'Auto-refresh: 10s';
+  }
+};
+
+load();
+</script>
+</body>
+</html>

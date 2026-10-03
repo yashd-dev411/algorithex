@@ -874,16 +874,19 @@ class MarketDataClient(ABC):
         )
         return series.validate()
 
-    def order_book(self, symbol: str, depth: int = 20) -> 'OrderBook':
+    def order_book(self, symbol: str, depth: Optional[int] = None) -> 'OrderBook':
         """Top ``depth`` levels of the book, best price first.
 
         :param symbol: ``BTC-USDT`` or ``BTCUSDT``
-        :param depth: must be one of the venue's advertised ladder sizes
+        :param depth: one of the venue's advertised ladder sizes, or ``None``
+            to use :meth:`default_depth`
         :raises ValueError: if ``depth`` is not advertised by this venue
         :raises ResponseFormatError: if a side comes back empty
         """
         normalized = normalize_symbol(symbol)
         allowed = self.allowed_book_depths()
+        if depth is None:
+            depth = self.default_depth()
         if depth not in allowed:
             raise ValueError(
                 f'{self.name} only supports depths {sorted(allowed)}, got {depth}'
@@ -913,6 +916,18 @@ class MarketDataClient(ABC):
     def allowed_book_depths(cls) -> Tuple[int, ...]:
         """Ladder sizes this venue accepts, as documented."""
         raise NotImplementedError
+
+    @classmethod
+    def default_depth(cls) -> int:
+        """A sensible ladder size for callers with no preference.
+
+        Venues disagree about which sizes exist -- Bybit offers 1, 50 and 200
+        but not 20 -- so a hard-coded default is a request that fails on one of
+        them. This picks the smallest advertised size that is at least 20, and
+        falls back to the smallest available.
+        """
+        depths = sorted(cls.allowed_book_depths())
+        return next((d for d in depths if d >= 20), depths[0])
 
     @classmethod
     def _ticker_path(cls) -> str:

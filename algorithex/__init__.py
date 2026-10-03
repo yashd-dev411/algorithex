@@ -100,6 +100,15 @@ async def validate_page():
     return response
 
 
+# Algorithex: live market data from real exchanges, read-only. Also served as a
+# standalone page so it is reachable without rebuilding the Nuxt bundle.
+@fastapi_app.get("/live")
+async def live_page():
+    response = FileResponse(f"{ALGORITHEX_DIR}/static/live.html")
+    response.headers['Cache-Control'] = CachedStaticFiles.REVALIDATE_CACHE
+    return response
+
+
 
 
 
@@ -129,6 +138,7 @@ from algorithex.controllers.route_templates_controller import router as route_te
 from algorithex.controllers.ai_model_controller import router as ai_model_router
 from algorithex.controllers.data_provider_credentials_controller import router as data_provider_credentials_router
 from algorithex.controllers.validation_controller import router as validation_router
+from algorithex.controllers.live_market_controller import router as live_market_router
 from algorithex.services.env import is_test_env
 
 # register routers
@@ -155,6 +165,7 @@ fastapi_app.include_router(route_templates_router)
 fastapi_app.include_router(ai_model_router)
 fastapi_app.include_router(data_provider_credentials_router)
 fastapi_app.include_router(validation_router)
+fastapi_app.include_router(live_market_router)
 
 if is_test_env():
     from algorithex.controllers.e2e_controller import router as e2e_router
