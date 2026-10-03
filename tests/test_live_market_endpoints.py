@@ -323,9 +323,36 @@ def test_the_live_router_exposes_exactly_one_post_endpoint():
 
 
 def test_no_key_or_secret_is_accepted_by_the_request_model():
-    """Credentials cannot be smuggled through the endpoint even if asked for."""
+    """The model has no field a credential could ride in on."""
     res_fields = set(live_market_controller.MarketRequestJson.model_fields)
     assert res_fields == {'exchange', 'symbol', 'interval', 'candles', 'depth'}
+
+
+def test_a_credential_in_the_body_is_dropped_and_never_forwarded(client, stub):
+    """Pydantic ignores unknown keys, so prove they go nowhere rather than assume it.
+
+    The risk this closes is specific: a client that echoes unknown fields, or a
+    controller that splats the raw body into request kwargs, would happily ship
+    a pasted API key to an exchange.
+    """
+    res = client.post(
+        '/live/market',
+        json=dict(BODY, api_key='leak-me', secret='leak-me-too', signature='leak-me-3'),
+        headers=auth_headers(),
+    )
+    assert res.status_code == 200
+
+    body_text = res.text
+    for leak in ('leak-me', 'leak-me-too', 'leak-me-3'):
+        assert leak not in body_text, 'a credential came back in the response'
+
+    # Nothing the client was constructed with may look like a credential.
+    forwarded = stub.created[0].kwargs
+    assert not any(
+        word in key.lower()
+        for key in forwarded
+        for word in ('key', 'secret', 'sign', 'token', 'auth', 'pass')
+    )
 
 
 def test_the_page_and_the_api_are_both_registered():
