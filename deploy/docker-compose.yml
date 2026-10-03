@@ -16,6 +16,15 @@
 # ../workspace and see their strategies as files. A named volume would work and
 # be less transparent about where the data went.
 
+# Compose derives the project name from this directory's name, so every
+# checkout would call itself "deploy" -- and `docker compose down` in one
+# checkout silently tears down another. Naming it explicitly fixes that, and
+# COMPOSE_PROJECT_NAME overrides it for a second instance on the same host.
+name: ${COMPOSE_PROJECT_NAME:-algorithex}
+
+# Container names follow the project name for the same reason: fixed names
+# collide the moment a second instance runs on one host.
+
 services:
   algorithex:
     image: ${ALGORITHEX_IMAGE:-algorithex:latest}
@@ -62,7 +71,7 @@ services:
       # Read-only: the app never writes it, and a read-only mount makes that
       # explicit rather than incidental.
       - ./.env:/home/.env:ro
-    container_name: algorithex
+    container_name: ${COMPOSE_PROJECT_NAME:-algorithex}
     restart: unless-stopped
     command: bash -c "algorithex install-live --no-strict && algorithex run"
     healthcheck:
@@ -84,7 +93,7 @@ services:
       - POSTGRES_DB=${POSTGRES_NAME:-algorithex_db}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    container_name: algorithex-postgres
+    container_name: ${COMPOSE_PROJECT_NAME:-algorithex}-postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-algorithex_user} -d ${POSTGRES_NAME:-algorithex_db}"]
       interval: 10s
@@ -94,7 +103,7 @@ services:
 
   redis:
     image: redis:6-alpine
-    container_name: algorithex-redis
+    container_name: ${COMPOSE_PROJECT_NAME:-algorithex}-redis
     restart: always
     # Persistence off deliberately: Redis is a cache here, and losing it costs
     # a rebuild rather than any real data.

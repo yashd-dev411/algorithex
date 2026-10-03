@@ -11,6 +11,7 @@ So: every path the documentation names must be inside this repository.
 """
 
 from pathlib import Path
+import os
 import re
 
 import pytest
@@ -143,6 +144,39 @@ def test_every_path_the_readme_uses_exists(readme):
 def test_the_readme_leads_with_a_clone_and_run(readme):
     assert 'git clone' in readme
     assert 'docker compose up -d' in readme
+
+
+def test_the_compose_project_is_named_explicitly():
+    """Compose derives the project name from the directory, so every checkout
+    calls itself `deploy` -- and `docker compose down` in one silently tears
+    down another. Observed the hard way: tearing down a clone's stack took the
+    running one with it."""
+    compose = (DEPLOY / 'docker-compose.yml').read_text(encoding='utf-8')
+    assert re.search(r'^name:\s*\$\{COMPOSE_PROJECT_NAME:-', compose, re.M), (
+        'the compose file must name its project explicitly'
+    )
+
+
+def test_two_checkouts_get_distinct_projects():
+    """The override is only useful if it actually changes the project name."""
+    import shutil
+    import subprocess
+
+    if not shutil.which('docker'):
+        pytest.skip('docker is not available')
+
+    def project_name(env=None):
+        result = subprocess.run(
+            ['docker', 'compose', 'config'],
+            cwd=str(DEPLOY), capture_output=True, text=True,
+            env={**os.environ, **(env or {})},
+        )
+        assert result.returncode == 0, result.stderr
+        match = re.search(r'^name:\s*(\S+)', result.stdout, re.M)
+        return match.group(1) if match else None
+
+    assert project_name() == 'algorithex'
+    assert project_name({'COMPOSE_PROJECT_NAME': 'second'}) == 'second'
 
 
 def test_the_published_port_is_the_port_the_app_listens_on():

@@ -468,6 +468,21 @@ Postgres and Redis are needed too. The compose file in `deploy/` is the
 supported way to run all three; point it at your own managed databases by
 changing `POSTGRES_HOST` and `REDIS_HOST`.
 
+### Running a second instance
+
+The compose project is named explicitly as `algorithex`, and the container names
+follow it. Compose otherwise derives the project name from the directory -- so
+every checkout calls itself `deploy`, and `docker compose down` in one silently
+tears down another.
+
+For a second, independent stack on the same host:
+
+```bash
+COMPOSE_PROJECT_NAME=second APP_PORT=9100 docker compose up -d
+```
+
+Change the ports as well as the name; two instances cannot share them.
+
 ### Continuous integration
 
 | Workflow | Trigger | What it does |
