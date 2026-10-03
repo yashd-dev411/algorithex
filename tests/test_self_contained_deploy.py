@@ -22,6 +22,46 @@ DEPLOY = REPO / 'deploy'
 WORKSPACE = REPO / 'workspace'
 
 
+@pytest.fixture
+def staged_deploy(tmp_path):
+    """
+    A copy of deploy/ laid out the way a first real run would have it.
+
+    The compose file references `.env` twice -- as `env_file`, and as a bind
+    mount -- and `.env` is deliberately untracked because it holds a password.
+    So `docker compose config` cannot run against a checkout that has never been
+    deployed: compose aborts with "env file ... not found" before it parses
+    anything. That is precisely the state CI is in, and precisely the state the
+    first person to clone this repository is in.
+
+    These tests were written against a developer machine where `.env` happened
+    to exist, which is the same mistake as writing them against the source tree
+    alone: they passed for a reason the reader does not have. Staging the env
+    file here makes the test assert what it claims -- that the compose file
+    parses -- instead of asserting that one machine is already deployed.
+
+    `COMPOSE_PROJECT_NAME` is stripped from the staged file on purpose. Left in,
+    the test below would pass off the value it happens to find in `.env` and
+    never prove that the default lives in the compose file, which is the thing
+    that keeps two checkouts from colliding.
+    """
+    import shutil
+
+    target = tmp_path / 'deploy'
+    shutil.copytree(DEPLOY, target, ignore=shutil.ignore_patterns('.env'))
+
+    env_lines = [
+        line for line
+        in (DEPLOY / '.env.example').read_text(encoding='utf-8').splitlines()
+        if not line.startswith('COMPOSE_PROJECT_NAME=')
+    ]
+    (target / '.env').write_text('\n'.join(env_lines) + '\n', encoding='utf-8')
+
+    # The compose file bind-mounts ../workspace, which is a sibling of deploy/.
+    (tmp_path / 'workspace').mkdir()
+    return target
+
+
 @pytest.fixture(scope='module')
 def readme():
     return README.read_text(encoding='utf-8')
@@ -110,7 +150,7 @@ def test_every_service_declares_a_healthcheck():
     assert compose.count('healthcheck:') == 3, 'app, postgres and redis each need one'
 
 
-def test_the_compose_file_parses():
+def test_the_compose_file_parses(staged_deploy):
     """A compose file that does not parse fails at the worst moment, which is
     on someone else's first run."""
     import shutil
@@ -119,8 +159,8 @@ def test_the_compose_file_parses():
     if not shutil.which('docker'):
         pytest.skip('docker is not available')
     result = subprocess.run(
-        ['docker', 'compose', '-f', str(DEPLOY / 'docker-compose.yml'), 'config', '--quiet'],
-        capture_output=True, text=True, cwd=str(DEPLOY),
+        ['docker', 'compose', '-f', str(staged_deploy / 'docker-compose.yml'), 'config', '--quiet'],
+        capture_output=True, text=True, cwd=str(staged_deploy),
     )
     assert result.returncode == 0, result.stderr
 
@@ -136,9 +176,24 @@ def test_the_readme_names_no_path_outside_this_repository(readme):
 
 
 def test_every_path_the_readme_uses_exists(readme):
-    """Check the repo-relative paths the deploy section actually names."""
-    for path in re.findall(r'`(deploy/[A-Za-z0-9_.-]+|workspace/[A-Za-z0-9_.-]*)`', readme):
-        assert (REPO / path).exists(), f'README names {path}, which does not exist'
+    """Check the repo-relative paths the deploy section actually names.
+
+    One exception, and it is the exception the instructions themselves create:
+    `deploy/.env` is not shipped, because it holds a password. It is acceptable
+    for the README to name it only while it also tells the reader the exact
+    command that produces it.
+    """
+    for path in sorted(set(
+        re.findall(r'`(deploy/[A-Za-z0-9_.-]+|workspace/[A-Za-z0-9_.-]*)`', readme)
+    )):
+        if (REPO / path).exists():
+            continue
+
+        assert path == 'deploy/.env', f'README names {path}, which does not exist'
+        assert 'cp .env.example .env' in readme, (
+            'the README names deploy/.env without telling the reader how to '
+            'create it'
+        )
 
 
 def test_the_readme_leads_with_a_clone_and_run(readme):
@@ -157,7 +212,7 @@ def test_the_compose_project_is_named_explicitly():
     )
 
 
-def test_two_checkouts_get_distinct_projects():
+def test_two_checkouts_get_distinct_projects(staged_deploy):
     """The override is only useful if it actually changes the project name."""
     import shutil
     import subprocess
@@ -168,7 +223,7 @@ def test_two_checkouts_get_distinct_projects():
     def project_name(env=None):
         result = subprocess.run(
             ['docker', 'compose', 'config'],
-            cwd=str(DEPLOY), capture_output=True, text=True,
+            cwd=str(staged_deploy), capture_output=True, text=True,
             env={**os.environ, **(env or {})},
         )
         assert result.returncode == 0, result.stderr
