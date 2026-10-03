@@ -86,6 +86,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov
+          # The image does `pip install -e .` too. Without it CI tests a bare
+          # source tree that has no distribution metadata, which is not what
+          # anyone deploys -- and it silently skipped 70 test modules at
+          # collection before this was added.
+          pip install -e .
 
       - name: Test
         # Exit status is taken from pytest itself, not from the pipe: `pytest |

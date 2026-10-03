@@ -2,7 +2,7 @@ import time
 import logging
 
 import click
-from importlib.metadata import version as get_version
+from importlib.metadata import PackageNotFoundError, version as get_version
 import uvicorn
 
 import algorithex.helpers as ah
@@ -15,8 +15,34 @@ PORT = 9000
 
 
 def _get_dist_version() -> str:
-    # Built as the self-named `algorithex` distribution.
-    return get_version("algorithex")
+    """
+    The installed distribution's version, or the source version.
+
+    ``get_version`` raises ``PackageNotFoundError`` when the project is only
+    present as a source tree. That is not an exotic state: a fresh ``git
+    clone`` that has had ``pip install -r requirements.txt`` run against it has
+    no distribution metadata, and this function is called at *import* time (the
+    ``@click.version_option`` decorator below), so the failure would take the
+    whole package -- and every test module that imports it -- down with it.
+
+    ``algorithex/version.py`` is the single source of the version number and is
+    read as text, because importing the package from inside the package would
+    recurse straight back into this module.
+    """
+    try:
+        return get_version("algorithex")
+    except PackageNotFoundError:
+        # Deliberately narrow: a corrupt or unreadable metadata directory is a
+        # different problem and should keep propagating rather than be papered
+        # over with a number that looks fine.
+        from pathlib import Path
+        import re
+
+        source = Path(__file__).with_name('version.py').read_text(encoding='utf-8')
+        match = re.search(
+            r"^__version__\s*=\s*['\"]([^'\"]+)['\"]", source, re.MULTILINE
+        )
+        return match.group(1) if match else 'unknown'
 
 
 @click.group()
