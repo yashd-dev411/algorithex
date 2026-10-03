@@ -1,0 +1,105 @@
+# Self-contained deployment for Algorithex.
+#
+# Everything needed is in this repository. Clone it, copy the env template, and
+# run:
+#
+#     cd deploy
+#     cp .env.example .env      # then edit PASSWORD and POSTGRES_PASSWORD
+#     docker compose up -d
+#
+# This file exists because the instructions used to point at a separate
+# workspace repository. Anyone who cloned only this one had no compose file and
+# no way to run the thing they had just cloned.
+#
+# The workspace (strategies/ and storage/) is a bind mount rather than a named
+# volume on purpose: a first-time deployer should be able to open
+# ../workspace and see their strategies as files. A named volume would work and
+# be less transparent about where the data went.
+
+services:
+  algorithex:
+    image: ${ALGORITHEX_IMAGE:-algorithex:latest}
+    # Omit `build` to pull the published image instead; set ALGORITHEX_IMAGE to
+    # ghcr.io/<owner>/<repo>:latest. Build only when running from source.
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    tty: true
+    env_file:
+      # Kept in addition to the bind mount above: if `.env` is missing this
+      # fails the deploy immediately and legibly, rather than silently letting
+      # docker create a directory at that path.
+      - .env
+    ports:
+      - "${APP_PORT:-9000}:9000"
+        # MCP server
+      - "${MCP_PORT:-9002}:9002"
+        # LSP
+      - "${LSP_PORT:-9001}:9001"
+        # Jupyter
+      - "${JUPYTER_PORT:-8888}:8888"
+    volumes:
+      # The app refuses to start unless its working directory contains
+      # `strategies/` and `storage/` (helpers.is_algorithex_project), so this
+      # mount is not optional.
+      - ../workspace:/home
+      # The app reads its configuration from a `.env` *file* in its working
+      # directory, not from the process environment -- with only `env_file`
+      # above it exits with ".env is missing or empty" and, under
+      # `restart: unless-stopped`, crash-loops. Compose already reads this same
+      # file for `${VAR}` substitution, so one file configures both.
+      #
+      # Read-only: the app never writes it, and a read-only mount makes that
+      # explicit rather than incidental.
+      - ./.env:/home/.env:ro
+    container_name: algorithex
+    restart: unless-stopped
+    command: bash -c "algorithex install-live --no-strict && algorithex run"
+    healthcheck:
+      # Repeated from the Dockerfile because compose overrides it. The script
+      # prints one line on failure rather than a traceback, which matters most
+      # here: a cold start fails every probe for the first two minutes.
+      test: ["CMD", "python", "/algorithex-docker/docker_healthcheck.py"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USERNAME:-algorithex_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_NAME:-algorithex_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    container_name: algorithex-postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-algorithex_user} -d ${POSTGRES_NAME:-algorithex_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:6-alpine
+    container_name: algorithex-redis
+    restart: always
+    # Persistence off deliberately: Redis is a cache here, and losing it costs
+    # a rebuild rather than any real data.
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  postgres-data:

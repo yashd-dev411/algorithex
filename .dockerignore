@@ -23,3 +23,6 @@ Dockerfile
 docker-compose.yml
 .idea
 venv
+deploy/
+workspace/
+.pytest_cache/

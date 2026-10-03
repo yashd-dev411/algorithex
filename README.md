@@ -367,23 +367,78 @@ def hyperparameters(self):
 Everything runs locally — no account and no website required:
 
 ```bash
-cd my-bot/docker
+cd deploy
+cp .env.example .env
 docker compose up -d
 ```
 
-Then open <http://localhost:9000>. The dashboard password is `PASSWORD` in `my-bot/.env`.
-The MCP server is at <http://localhost:9002/mcp>; see [AGENTS.md](AGENTS.md) for the
-strategy-authoring workflow it exposes.
+Then open <http://localhost:9000>. The dashboard password is `PASSWORD` in
+`deploy/.env`. The MCP server is at <http://localhost:9002/mcp>; see
+[AGENTS.md](AGENTS.md) for the strategy-authoring workflow it exposes.
 
 ## Deploying
 
-Algorithex ships as a container image. Everything below assumes Docker; nothing
-requires Kubernetes or any particular host.
+Everything needed to run Algorithex is in this repository. Clone it, and you
+have a deployable stack.
 
-### From the published image
+```bash
+git clone https://github.com/<you>/<repo>.git
+cd <repo>/deploy
+cp .env.example .env          # then edit it, see below
+docker compose up -d
+docker compose ps             # wait until `algorithex` reads healthy
+```
+
+The dashboard is on <http://localhost:9000>. Sign in with the `PASSWORD` from
+`.env`.
+
+`docker compose ps` is the thing to watch on first run. The app is gated on
+Postgres and Redis passing their healthchecks before it starts, so you should see
+them report `healthy` and *then* the app start. The first boot is slow because it
+installs the workspace; the healthcheck allows 120 seconds for that and only
+then starts counting failures.
+
+### Configuration
+
+Edit `deploy/.env`. Every value in it is a local default. Two matter before
+anything but you can reach the dashboard:
+
+| Variable | Why |
+| --- | --- |
+| `PASSWORD` | The dashboard login. Its sha256 is what the API compares, so changing it invalidates existing sessions. |
+| `POSTGRES_PASSWORD` | Set this if the database is reachable from anywhere but this machine. |
+
+Compose reads that same file twice, which is deliberate: it substitutes
+`${VAR}` values like the port mappings, and it is bind-mounted to `/home/.env`
+because the application reads its configuration from a *file* in its working
+directory rather than from the process environment. Edit it once.
+
+`.env` is gitignored. `deploy/.env.example` is tracked, and every variable the
+stack consumes is in it.
+
+### Where your data lives
+
+`workspace/` is mounted at `/home`. That is where your strategies and all
+generated data live:
+
+- `workspace/strategies/` — one directory per strategy, each with an
+  `__init__.py`. The dashboard's Strategies tab discovers them from here.
+- `workspace/storage/` — candles, logs, charts, backtest results.
+
+Everything the app generates is gitignored, so the skeleton stays in version
+control and your actual work stays yours. It is a bind mount rather than a
+Docker volume on purpose: you can open the directory and see your strategies as
+files.
+
+The app refuses to start if its working directory lacks `strategies/` or
+`storage/` (`helpers.is_algorithex_project`), which is why `workspace/` ships
+with both. If you mount something else at `/home`, it needs those two
+directories.
+
+### Deploying the published image
 
 The image is published to GitHub Container Registry under this repository's own
-namespace, so it needs no credentials for the owner:
+namespace, so the owner needs no credentials:
 
 ```bash
 docker pull ghcr.io/<owner>/<repo>:latest
@@ -392,45 +447,28 @@ docker pull ghcr.io/<owner>/<repo>:latest
 GHCR packages are private by default. Anyone else pulling needs the package set
 to public in the repository's package settings, or a token with `read:packages`.
 
-Then use the workspace repository's compose file, which brings up the app,
-Postgres and Redis together:
+To run it instead of building from source, set one variable in `deploy/.env`:
 
-```bash
-cd my-bot/docker
-cp ../.env.example ../.env     # then edit it; see below
-docker compose up -d
-docker compose ps              # wait until `algorithex` reads healthy
+```
+ALGORITHEX_IMAGE=ghcr.io/<owner>/<repo>:latest
 ```
 
-The dashboard is on <http://localhost:9000>. Sign in with the `PASSWORD` from
-`.env`.
+### Deploying anywhere else
 
-### Configuration
-
-Copy `my-bot/.env.example` to `my-bot/.env` and edit it. Every value there is a
-local default; the two that matter before this is reachable by anything other
-than you are `PASSWORD` and `POSTGRES_PASSWORD`. Compose also reads
-`POSTGRES_PASSWORD` from the environment, so a secret manager can supply it
-without touching a file.
-
-The app is gated on Postgres and Redis passing their healthchecks before it
-starts, so a cold start cannot race the database. The image itself declares a
-healthcheck too, which means a bare `docker run` gets the same behaviour:
+It is a plain container image with no host requirements beyond Docker. Ports are
+`9000` (dashboard), `9001` (LSP), `9002` (MCP) and `8888` (Jupyter). `EXPOSE` is
+declared and a `HEALTHCHECK` is baked in, so `docker run -p 9000:9000 ...` and
+any orchestrator can tell a serving container from a crash-looping one:
 
 ```bash
-docker run -p 9000:9000 ... ghcr.io/<owner>/<repo>:latest
+docker run -p 9000:9000 -v "$PWD/workspace:/home" ghcr.io/<owner>/<repo>:latest
 ```
 
-### Building from source
-
-```bash
-cd my-bot/docker
-docker compose build
-```
+Postgres and Redis are needed too. The compose file in `deploy/` is the
+supported way to run all three; point it at your own managed databases by
+changing `POSTGRES_HOST` and `REDIS_HOST`.
 
 ### Continuous integration
-
-Three workflows run in `.github/workflows`:
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
