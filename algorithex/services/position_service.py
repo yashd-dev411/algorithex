@@ -1,7 +1,7 @@
 from algorithex.config import config
 from algorithex.models import Position
 from algorithex.store import store
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.exceptions import EmptyPosition, OpenPositionError
 from algorithex.services import closed_trade_service
 from algorithex.enums import trade_types
@@ -21,7 +21,7 @@ def initialize_positions_state() -> None:
 def create_position(exchange_name: str, symbol: str, attributes: dict = None) -> Position:
     p = Position(attributes)
     if p.id is None:
-        p.id = jh.generate_unique_id()  
+        p.id = ah.generate_unique_id()  
     p.exchange_name = exchange_name
     p.exchange = store.exchanges.get_exchange(exchange_name)
     p.symbol = symbol
@@ -33,17 +33,17 @@ def _mutating_close(position: Position, close_price: float) -> None:
         raise EmptyPosition('The position is already closed.')
 
     position.exit_price = close_price
-    position.closed_at = jh.now_to_timestamp()
+    position.closed_at = ah.now_to_timestamp()
 
     if position.exchange and position.exchange.type == 'futures':
         # just to prevent confusion
         close_qty = abs(position.qty)
-        estimated_profit = jh.estimate_PNL(
+        estimated_profit = ah.estimate_PNL(
             close_qty, position.entry_price,
             close_price, position.type
         )
         position.exchange.add_realized_pnl(estimated_profit)
-        position.exchange.temp_reduced_amount[jh.base_asset(position.symbol)] += abs(close_qty * close_price)
+        position.exchange.temp_reduced_amount[ah.base_asset(position.symbol)] += abs(close_qty * close_price)
 
     if position._can_mutate_qty:
         _update_qty(position, 0, operation='set')
@@ -68,12 +68,12 @@ def _mutating_reduce(position: Position, qty: float, price: float) -> None:
     # just to prevent confusion
     qty = abs(qty)
 
-    estimated_profit = jh.estimate_PNL(qty, position.entry_price, price, position.type)
+    estimated_profit = ah.estimate_PNL(qty, position.entry_price, price, position.type)
 
     if position.exchange and position.exchange.type == 'futures':
         # position.exchange.increase_futures_balance(qty * position.entry_price + estimated_profit)
         position.exchange.add_realized_pnl(estimated_profit)
-        position.exchange.temp_reduced_amount[jh.base_asset(position.symbol)] += abs(qty * price)
+        position.exchange.temp_reduced_amount[ah.base_asset(position.symbol)] += abs(qty * price)
 
     if position.type == trade_types.LONG:
         _update_qty(position, qty, operation='subtract')
@@ -87,7 +87,7 @@ def _mutating_increase(position: Position, qty: float, price: float) -> None:
 
     qty = abs(qty)
 
-    position.entry_price = jh.estimate_average_price(
+    position.entry_price = ah.estimate_average_price(
         qty, price, position.qty,
         position.entry_price
     )
@@ -109,7 +109,7 @@ def _mutating_open(position: Position, qty: float, price: float) -> None:
     if position._can_mutate_qty:
         _update_qty(position, qty, operation='set')
 
-    position.opened_at = jh.now_to_timestamp()
+    position.opened_at = ah.now_to_timestamp()
 
     _open(position)
 
@@ -144,7 +144,7 @@ def _open(position: Position, p_orders: list = None):
 
 def on_executed_order(position: Position, order: Order) -> None:
     # futures (live)
-    if jh.is_livetrading() and position.exchange_type == 'futures':
+    if ah.is_livetrading() and position.exchange_type == 'futures':
         # if position got closed because of this order
         if order.is_partially_filled:
             before_qty = position.qty - order.filled_qty
@@ -154,7 +154,7 @@ def on_executed_order(position: Position, order: Order) -> None:
         if before_qty != 0 and after_qty == 0:
             _close(position)
     # spot (live)
-    elif jh.is_livetrading() and position.exchange_type == 'spot':
+    elif ah.is_livetrading() and position.exchange_type == 'spot':
         # if position got closed because of this order
         before_qty = position.previous_qty
         after_qty = position.qty
@@ -241,11 +241,11 @@ def update_from_stream(position: Position, data: dict, is_initial: bool, open_tr
         # if is_initial:
         #     from algorithex.store import store
         #     store.closed_trades.add_order_record_only(
-        #         self.exchange_name, self.symbol, jh.type_to_side(self.type),
+        #         self.exchange_name, self.symbol, ah.type_to_side(self.type),
         #         self.qty, self.entry_price
         #     )
-        position.opened_at = jh.now_to_timestamp()
+        position.opened_at = ah.now_to_timestamp()
         if not open_trade:
             _open(position, p_orders)
     elif closing_position:
-        position.closed_at = jh.now_to_timestamp()
+        position.closed_at = ah.now_to_timestamp()

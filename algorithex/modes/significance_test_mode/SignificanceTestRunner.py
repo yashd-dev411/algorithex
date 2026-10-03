@@ -3,7 +3,7 @@ import time
 import traceback
 from typing import Dict, List, Optional
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import exceptions
 from algorithex.services.redis import sync_publish, is_process_active
 from algorithex.models.SignificanceTestSession import (
@@ -38,9 +38,9 @@ class SignificanceTestRunner:
         self.random_seed = random_seed if random_seed is not None else 42
         self.theme = theme
 
-        self.start_time = jh.now_to_timestamp()
+        self.start_time = ah.now_to_timestamp()
 
-        self.client_id = jh.get_session_id()
+        self.client_id = ah.get_session_id()
 
     def _raise_if_cancelled(self) -> None:
         """Stop inside the active execution path when cancellation is requested."""
@@ -55,13 +55,13 @@ class SignificanceTestRunner:
 
     def run(self) -> None:
         try:
-            jh.debug(f"Rule Significance Test started: {self.n_simulations} simulations")
+            ah.debug(f"Rule Significance Test started: {self.n_simulations} simulations")
             self._raise_if_cancelled()
             self._publish_general_info()
             self._run_significance_test()
             update_significance_test_session_status(self.session_id, 'finished')
             
-            finish_time = jh.now_to_timestamp()
+            finish_time = ah.now_to_timestamp()
             execution_duration = round((finish_time - self.start_time) / 1000, 2)
             
             sync_publish('alert', {
@@ -86,8 +86,8 @@ class SignificanceTestRunner:
 
     def _publish_general_info(self):
         sync_publish('general_info', {
-            'started_at': jh.timestamp_to_arrow(self.start_time).humanize(
-                jh.timestamp_to_arrow(jh.now(force_fresh=True))
+            'started_at': ah.timestamp_to_arrow(self.start_time).humanize(
+                ah.timestamp_to_arrow(ah.now(force_fresh=True))
             ),
             'n_simulations': self.n_simulations,
         })
@@ -123,7 +123,7 @@ class SignificanceTestRunner:
                 or current_progress == total_progress
             )
             if should_publish:
-                elapsed = jh.now_to_timestamp() - self.start_time
+                elapsed = ah.now_to_timestamp() - self.start_time
                 completed_sims = int((current_progress / total_progress) * self.n_simulations) if total_progress > 0 else 0
                 if completed_sims > 0:
                     avg = elapsed / completed_sims

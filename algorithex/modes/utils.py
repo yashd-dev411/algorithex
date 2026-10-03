@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services import logger
 from algorithex.info import exchange_info
 from algorithex.services.simulation_assumptions import SimulationModel, simulation_model_from_legacy_type
@@ -11,12 +11,12 @@ def save_daily_portfolio_balance(is_initial=False) -> None:
     from algorithex.store import store
 
     # # store daily_balance of assets into database
-    # if jh.is_livetrading():
+    # if ah.is_livetrading():
     #     for asset_key, asset_value in e.assets.items():
     #         store_daily_balance_into_db({
-    #             'id': jh.generate_unique_id(),
-    #             'timestamp': jh.now(),
-    #             'identifier': jh.get_config('env.identifier', 'main'),
+    #             'id': ah.generate_unique_id(),
+    #             'timestamp': ah.now(),
+    #             'identifier': ah.get_config('env.identifier', 'main'),
     #             'exchange': e.name,
     #             'asset': asset_key,
     #             'balance': asset_value,
@@ -30,7 +30,7 @@ def save_daily_portfolio_balance(is_initial=False) -> None:
     
     if e.type == 'futures':
         # For futures, add wallet balance and sum of all PNLs
-        total_balances = e.assets[jh.app_currency()]
+        total_balances = e.assets[ah.app_currency()]
         for key, pos in store.positions.storage.items():
             if pos.is_open:
                 total_balances += pos.pnl
@@ -48,7 +48,7 @@ def save_daily_portfolio_balance(is_initial=False) -> None:
         store.app.daily_balance.append(total_balances)
         store.app.daily_balance_timestamps.append(sample_timestamp)
 
-    if not jh.is_livetrading():
+    if not ah.is_livetrading():
         logger.info(f'Saved daily portfolio balance: {round(total_balances, 2)}')
 
 
@@ -58,18 +58,18 @@ def get_exchange_type(exchange_name: str) -> str:
     """
     # Real exchange execution is authoritative. Paper sessions use the selected
     # simulation model because no venue account constrains their accounting.
-    if jh.is_livetrading():
+    if ah.is_livetrading():
         return exchange_info[exchange_name]['type']
 
     # for other trading modes, we can get the exchange type from the config file
-    return jh.get_config(f'env.exchanges.{exchange_name}.type')
+    return ah.get_config(f'env.exchanges.{exchange_name}.type')
 
 
 def get_simulation_model(exchange_name: str) -> SimulationModel:
-    if jh.is_livetrading():
+    if ah.is_livetrading():
         return simulation_model_from_legacy_type(exchange_info[exchange_name]['type'])
 
-    value = jh.get_config(f'env.exchanges.{exchange_name}.simulation_model')
+    value = ah.get_config(f'env.exchanges.{exchange_name}.simulation_model')
     if value is not None:
         return SimulationModel(value)
     return simulation_model_from_legacy_type(get_exchange_type(exchange_name))

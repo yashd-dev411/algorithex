@@ -25,7 +25,7 @@ from algorithex.services.custom_candle_import import (
     normalize_custom_symbol,
     scan_custom_candle_csv,
 )
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 router = APIRouter(prefix="/candles", tags=["Candles"], dependencies=[Depends(require_auth)])
 # Native form downloads cannot set an Authorization header, so this isolated route verifies
@@ -148,7 +148,7 @@ def import_candles(request_json: ImportCandlesRequestJson) -> JSONResponse:
     from algorithex.modes import import_candles_mode
 
     try:
-        jh.validate_cwd()
+        ah.validate_cwd()
         import_candles_mode.validate_import_request(
             request_json.exchange,
             request_json.symbol,
@@ -216,7 +216,7 @@ def get_candles(json_request: GetCandlesRequestJson) -> JSONResponse:
     Get candles for a specific exchange, symbol, and timeframe
     """
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     from algorithex.modes.data_provider import get_candles as gc
 
@@ -318,7 +318,7 @@ def copy_candles(json_request: CopyCandlesRequestJson) -> JSONResponse:
         )
     try:
         # quote_asset() enforces Algorithex's BASE-QUOTE symbol contract.
-        jh.quote_asset(target_symbol)
+        ah.quote_asset(target_symbol)
     except InvalidRoutes as e:
         return JSONResponse({'error': str(e)}, status_code=422)
 

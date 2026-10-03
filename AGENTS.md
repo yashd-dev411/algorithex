@@ -138,7 +138,7 @@ Notes:
 ## Important Notes
 
 ### Debugging
-- **Use `jh.debug()` for all debugging output** - Never use plain `print()`
+- **Use `ah.debug()` for all debugging output** - Never use plain `print()`
 - **Log format**: `[2024-12-06 18:23:12] ==> Your message here`
 - Logs include timestamps and `==>` prefix
 - Essential for debugging backtests and live trading sessions

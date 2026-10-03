@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.factories import candles_from_close_prices
 from algorithex.strategies import Strategy
 from algorithex import research
@@ -56,7 +56,7 @@ def _isolation_inputs(exchange: str, exchange_type: str, strategy: type[Strategy
         'timeframe': '1m',
     }]
     candles = {
-        jh.key(exchange, symbol): {
+        ah.key(exchange, symbol): {
             'exchange': exchange,
             'symbol': symbol,
             'candles': candles_from_close_prices(range(10, 31)),
@@ -99,8 +99,8 @@ def _assert_isolated_runtime_is_clean() -> None:
     assert store.vars == {}
     assert store.exchanges.storage == {}
     assert store.orders.storage == {}
-    assert jh.is_live() is False
-    assert jh.is_optimizing() is False
+    assert ah.is_live() is False
+    assert ah.is_optimizing() is False
 
 
 def test_can_pass_strategy_as_string_in_futures_exchange():
@@ -122,7 +122,7 @@ def test_can_pass_strategy_as_string_in_futures_exchange():
     ]
     data_routes = []
     candles = {
-        jh.key(exchange_name, symbol): {
+        ah.key(exchange_name, symbol): {
             'exchange': exchange_name,
             'symbol': symbol,
             'candles': fake_candles,
@@ -168,7 +168,7 @@ def test_can_pass_strategy_as_class_in_a_futures_exchange():
     ]
     data_routes = []
     candles = {
-        jh.key(exchange_name, symbol): {
+        ah.key(exchange_name, symbol): {
             'exchange': exchange_name,
             'symbol': symbol,
             'candles': fake_candles,
@@ -212,7 +212,7 @@ def test_can_pass_strategy_as_class_in_a_spot_exchange():
     ]
     data_routes = []
     candles = {
-        jh.key(exchange_name, symbol): {
+        ah.key(exchange_name, symbol): {
             'exchange': exchange_name,
             'symbol': symbol,
             'candles': fake_candles,
@@ -259,7 +259,7 @@ def test_store_state_app_is_reset_properly_in_isolated_backtest():
     ]
     data_routes = []
     candles = {
-        jh.key(exchange_name, symbol): {
+        ah.key(exchange_name, symbol): {
             'exchange': exchange_name,
             'symbol': symbol,
             'candles': fake_candles,
@@ -313,7 +313,7 @@ def test_dna_method_works_in_isolated_backtest():
     ]
     data_routes = []
     candles = {
-        jh.key(exchange_name, symbol): {
+        ah.key(exchange_name, symbol): {
             'exchange': exchange_name,
             'symbol': symbol,
             'candles': fake_candles,
@@ -395,7 +395,7 @@ def test_backtest_replays_observed_internal_gaps(fast_mode: bool):
     ]
     data_routes = []
     candles = {
-        jh.key(exchange_name, symbol): {
+        ah.key(exchange_name, symbol): {
             'exchange': exchange_name,
             'symbol': symbol,
             'candles': candles,
@@ -436,7 +436,7 @@ def test_passed_candles_are_not_affected_by_running_isolated_backtests():
     ]
     data_routes = []
     candles = {
-        jh.key(exchange_name, symbol): {
+        ah.key(exchange_name, symbol): {
             'exchange': exchange_name,
             'symbol': symbol,
             'candles': fake_candles,
@@ -473,7 +473,7 @@ def test_research_backtest_cleans_runtime_state_after_success():
     # belong to the research session.
     config['app']['trading_mode'] = 'papertrade'
     store.vars['outside-session'] = True
-    assert jh.is_live() is True
+    assert ah.is_live() is True
 
     _isolation_fingerprint('Cleanup Exchange', 'futures')
 

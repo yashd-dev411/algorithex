@@ -9,7 +9,7 @@ from algorithex import research
 from algorithex.candle_pipelines import MovingBlockBootstrapCandlesPipeline
 from algorithex.config import config
 from algorithex.factories import candles_from_close_prices
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.routes import router
 from algorithex.store import store
 
@@ -41,7 +41,7 @@ def _monte_carlo_inputs(strategy: str = 'TestOptimizationIsolation') -> tuple[di
         prices.append(prices[-1] + changes[index % len(changes)])
 
     candles = {
-        jh.key(exchange, symbol): {
+        ah.key(exchange, symbol): {
             'exchange': exchange,
             'symbol': symbol,
             'candles': candles_from_close_prices(prices),
@@ -78,8 +78,8 @@ def _assert_research_runtime_is_clean(ray_was_initialized: bool) -> None:
     assert store.vars == {}
     assert store.exchanges.storage == {}
     assert store.orders.storage == {}
-    assert jh.is_live() is False
-    assert jh.is_optimizing() is False
+    assert ah.is_live() is False
+    assert ah.is_optimizing() is False
 
 
 def _trade_scenario_fingerprint(result: dict) -> list:

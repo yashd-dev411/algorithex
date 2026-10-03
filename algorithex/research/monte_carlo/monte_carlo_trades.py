@@ -5,7 +5,7 @@ import numpy as np
 import random
 import os
 from datetime import datetime
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.research import backtest
 from algorithex.services.simulation_assumptions import resolve_annualization
 import matplotlib
@@ -169,7 +169,7 @@ def monte_carlo_trades(
             cpu_cores, ray_started_here, progress_callback, result_callback
         )
     except Exception as e:
-        jh.debug(f"Error during Monte Carlo simulation: {e}")
+        ah.debug(f"Error during Monte Carlo simulation: {e}")
         raise
     finally:
         if ray_started_here and ray.is_initialized():

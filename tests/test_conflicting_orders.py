@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.config import reset_config
 from algorithex.enums import exchanges
 from algorithex.factories import candles_from_close_prices
@@ -11,7 +11,7 @@ from algorithex.testing_utils import single_route_backtest
 
 def get_btc_candles():
     return {
-        jh.key(exchanges.SANDBOX, 'BTC-USDT'): {
+        ah.key(exchanges.SANDBOX, 'BTC-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'BTC-USDT',
             'candles': candles_from_close_prices(range(1, 100)),

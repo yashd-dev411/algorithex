@@ -9,7 +9,7 @@ import ray
 import ray.exceptions
 from tqdm import tqdm
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import exceptions
 from algorithex.config import config as algorithex_config, set_config
 from algorithex.research.backtest import _reset_research_runtime_state
@@ -197,7 +197,7 @@ def _execute_optimize(
     router.initiate(formatted_routes, formatted_data_routes)
 
     # ------------------------------------------------- resolve hyperparameters
-    strategy_class = jh.get_strategy_class(router.routes[0].strategy_name)
+    strategy_class = ah.get_strategy_class(router.routes[0].strategy_name)
     strategy_hp = strategy_class.hyperparameters(None)
 
     if not strategy_hp:
@@ -329,10 +329,10 @@ def _execute_optimize(
                     # Re-raise RouteNotFound as the underlying RuntimeError
                     if hasattr(e, 'cause') and isinstance(e.cause, RuntimeError) and 'RouteNotFound:' in str(e.cause):
                         raise e.cause
-                    jh.debug(f'Ray task error for trial {t_num}: {e}')
+                    ah.debug(f'Ray task error for trial {t_num}: {e}')
                     raise
                 except Exception as e:
-                    jh.debug(f'Exception in ray method for trial {t_num}: {e}')
+                    ah.debug(f'Exception in ray method for trial {t_num}: {e}')
                     raise
 
         bar.close()

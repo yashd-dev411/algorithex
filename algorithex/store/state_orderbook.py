@@ -1,6 +1,6 @@
 import numpy as np
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.libs import DynamicNumpyArray
 from algorithex.routes import router
 
@@ -13,7 +13,7 @@ class OrderbookState:
     def init_storage(self) -> None:
         for ar in router.all_formatted_routes:
             exchange, symbol = ar['exchange'], ar['symbol']
-            key = jh.key(exchange, symbol)
+            key = ah.key(exchange, symbol)
             self.temp_storage[key] = {
                 'last_updated_timestamp': None,
                 'asks': [],
@@ -22,7 +22,7 @@ class OrderbookState:
             self.storage[key] = DynamicNumpyArray((60, 2, 50, 2), drop_at=60)
 
     def format_orderbook(self, exchange: str, symbol: str) -> np.ndarray:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
 
         # trim prices
         asks = _trim_orderbook_list(self.temp_storage[key]['asks'], ascending=True)
@@ -37,43 +37,43 @@ class OrderbookState:
         ])
 
     def add_orderbook(self, exchange: str, symbol: str, asks: list, bids: list) -> None:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         self.temp_storage[key]['asks'] = asks
         self.temp_storage[key]['bids'] = bids
 
         # generate new numpy formatted orderbook if it is
         # either the first time, or that it has passed
         # 1000 milliseconds since the last time
-        if self.temp_storage[key]['last_updated_timestamp'] is None or jh.now_to_timestamp() - self.temp_storage[key][
+        if self.temp_storage[key]['last_updated_timestamp'] is None or ah.now_to_timestamp() - self.temp_storage[key][
             'last_updated_timestamp'] >= 1000:
-            self.temp_storage[key]['last_updated_timestamp'] = jh.now_to_timestamp()
+            self.temp_storage[key]['last_updated_timestamp'] = ah.now_to_timestamp()
 
             formatted_orderbook = self.format_orderbook(exchange, symbol)
 
             self.storage[key].append(formatted_orderbook)
 
     def get_current_orderbook(self, exchange: str, symbol: str) -> np.ndarray:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][-1]
 
     def get_current_asks(self, exchange: str, symbol: str) -> np.ndarray:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][-1][0]
 
     def get_best_ask(self, exchange: str, symbol: str) -> np.ndarray:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][-1][0][0]
 
     def get_current_bids(self, exchange: str, symbol: str) -> np.ndarray:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][-1][1]
 
     def get_best_bid(self, exchange: str, symbol: str) -> np.ndarray:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][-1][1][0]
 
     def get_orderbooks(self, exchange: str, symbol: str) -> np.ndarray:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][:]
 
 
@@ -95,7 +95,7 @@ def _trim_orderbook_list(arr: list, ascending: bool, limit_len: int = 50) -> lis
     else:
         unit = 10
 
-    trimmed_price = jh.orderbook_trim_price(first_price, ascending, unit)
+    trimmed_price = ah.orderbook_trim_price(first_price, ascending, unit)
     temp_qty = 0
     trimmed_arr = []
     for a in arr:
@@ -109,7 +109,7 @@ def _trim_orderbook_list(arr: list, ascending: bool, limit_len: int = 50) -> lis
             ])
             # update temp values
             temp_qty = a[1]
-            trimmed_price = jh.orderbook_trim_price(a[0], ascending, unit)
+            trimmed_price = ah.orderbook_trim_price(a[0], ascending, unit)
         else:
             temp_qty += a[1]
 

@@ -1,6 +1,6 @@
 import json
 from starlette.responses import JSONResponse
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services import transformers
 
 
@@ -51,11 +51,11 @@ def store_notification_api_keys(
     try:
         # create the record
         notification_api_key: NotificationApiKeys = NotificationApiKeys.create(
-            id=jh.generate_unique_id(),
+            id=ah.generate_unique_id(),
             name=name,
             driver=driver,
             fields=json.dumps(fields),
-            created_at=jh.now_to_datetime()
+            created_at=ah.now_to_datetime()
         )
     except ValueError as e:
         database.close_connection()

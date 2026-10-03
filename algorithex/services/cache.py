@@ -4,13 +4,13 @@ from time import time
 from typing import Any
 from functools import lru_cache
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 class Cache:
     def __init__(self, path: str) -> None:
         self.path = path
-        self.driver = jh.get_config('env.caching.driver', 'pickle')
+        self.driver = ah.get_config('env.caching.driver', 'pickle')
 
         if self.driver == 'pickle':
             # make sure path exists

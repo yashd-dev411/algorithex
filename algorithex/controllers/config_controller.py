@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from algorithex.services.auth import require_auth
 from algorithex.services.web import ConfigRequestJson
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 router = APIRouter(prefix="/config", tags=["Configuration"], dependencies=[Depends(require_auth)])
 
@@ -17,7 +17,7 @@ def get_config(json_request: ConfigRequestJson):
     from algorithex.modes.data_provider import get_config as gc
 
     return JSONResponse({
-        'data': gc(json_request.current_config, has_live=jh.has_live_trade_plugin())
+        'data': gc(json_request.current_config, has_live=ah.has_live_trade_plugin())
     }, status_code=200)
 
 

@@ -1,6 +1,6 @@
 from algorithex.strategies import Strategy
 from pprint import pprint
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 class TestMultipleEntryOrdersUpdateEntryShortPositions(Strategy):

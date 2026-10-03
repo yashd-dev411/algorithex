@@ -5,7 +5,7 @@ import multiprocessing as mp
 import traceback
 from algorithex.services.redis import sync_publish, sync_redis
 from algorithex.services.failure import terminate_session
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.env import ENV_VALUES
 import os
 import signal
@@ -16,7 +16,7 @@ mp.set_start_method('spawn', force=True)
 
 def _terminal_debug(message: str) -> None:
     try:
-        jh.terminal_debug(message)
+        ah.terminal_debug(message)
     except Exception:
         pass
 
@@ -31,7 +31,7 @@ class Process(mp.Process):
         except Exception as e:
             if type(e).__name__ == 'Termination':
                 sync_publish('termination', {})
-                jh.terminate_app()
+                ah.terminate_app()
             else:
                 err_text = f'{type(e).__name__}: {e}'
                 tb_text = str(traceback.format_exc())
@@ -67,7 +67,7 @@ class ProcessManager:
 
     def _reset(self):
         client_ids = {
-            jh.string_after_character(prefixed_client_id, '|')
+            ah.string_after_character(prefixed_client_id, '|')
             for prefixed_client_id in self.client_id_to_pid_to_map
         }
         self._pending_worker_removals.update(client_ids)
@@ -123,7 +123,7 @@ class ProcessManager:
             client_id: str = self._pid_to_client_id_map[self._prefixed_pid(pid)]
         except KeyError:
             return None
-        return jh.string_after_character(client_id, '|')
+        return ah.string_after_character(client_id, '|')
 
     def get_pid(self, client_id):
         return self.client_id_to_pid_to_map[self._prefixed_client_id(client_id)]
@@ -147,7 +147,7 @@ class ProcessManager:
 
                     w.close()
                 except Exception as e:
-                    jh.debug(f"Error while terminating process: {str(e)}")
+                    ah.debug(f"Error while terminating process: {str(e)}")
 
             self._reset()
 
@@ -196,7 +196,7 @@ class ProcessManager:
                                 exit_code = w.exitcode
                                 worker_pid = w.pid
                                 client_id = (
-                                    jh.string_after_character(prefixed_client_id, '|')
+                                    ah.string_after_character(prefixed_client_id, '|')
                                     if prefixed_client_id
                                     else 'unknown'
                                 )

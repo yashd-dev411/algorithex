@@ -1,7 +1,7 @@
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from typing import Union
 from algorithex import exceptions
@@ -73,8 +73,8 @@ class KrakenSpotMain(CandleExchange):
             return self._altname_cache[symbol]
         # fallback: build an altname directly, mapping standard names back to Kraken's (BTC->XBT,
         # DOGE->XDG)
-        base = jh.get_base_asset(symbol)
-        quote = jh.get_quote_asset(symbol)
+        base = ah.get_base_asset(symbol)
+        quote = ah.get_quote_asset(symbol)
         base = self._ALGORITHEX_TO_KRAKEN_BASE.get(base, base)
         quote = self._ALGORITHEX_TO_KRAKEN_BASE.get(quote, quote)
         return base + quote
@@ -118,7 +118,7 @@ class KrakenSpotMain(CandleExchange):
         # Already oldest-first; do NOT reverse.
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

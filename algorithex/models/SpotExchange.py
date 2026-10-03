@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.enums import sides
 from algorithex.exceptions import InsufficientBalance
 from algorithex.models.Order import Order
@@ -20,10 +20,10 @@ class SpotExchange(Exchange):
 
     @property
     def started_balance(self) -> float:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return self._started_balance
 
-        return self.starting_assets[jh.app_currency()]
+        return self.starting_assets[ah.app_currency()]
 
     @property
     def wallet_balance(self) -> float:
@@ -34,7 +34,7 @@ class SpotExchange(Exchange):
         return self.wallet_balance
 
     def on_order_submission(self, order: Order) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
         if order.side == sides.SELL:
@@ -43,7 +43,7 @@ class SpotExchange(Exchange):
             elif order.type == order_types.LIMIT:
                 self.limit_orders_sum[order.symbol] = sum_floats(self.limit_orders_sum.get(order.symbol, 0), abs(order.qty))
 
-        base_asset = jh.base_asset(order.symbol)
+        base_asset = ah.base_asset(order.symbol)
 
         # buy order
         if order.side == sides.BUY:
@@ -73,7 +73,7 @@ class SpotExchange(Exchange):
                 )
 
     def on_order_execution(self, order: Order) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
         if order.side == sides.SELL:
@@ -82,7 +82,7 @@ class SpotExchange(Exchange):
             elif order.type == order_types.LIMIT:
                 self.limit_orders_sum[order.symbol] = subtract_floats(self.limit_orders_sum[order.symbol], abs(order.qty))
 
-        base_asset = jh.base_asset(order.symbol)
+        base_asset = ah.base_asset(order.symbol)
 
         # buy order
         if order.side == sides.BUY:
@@ -105,7 +105,7 @@ class SpotExchange(Exchange):
             self.assets[base_asset] = subtract_floats(self.assets[base_asset], order_qty)
 
     def on_order_cancellation(self, order: Order) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
         if order.side == sides.SELL:
@@ -114,7 +114,7 @@ class SpotExchange(Exchange):
             elif order.type == order_types.LIMIT:
                 self.limit_orders_sum[order.symbol] = subtract_floats(self.limit_orders_sum[order.symbol], abs(order.qty))
 
-        base_asset = jh.base_asset(order.symbol)
+        base_asset = ah.base_asset(order.symbol)
 
         # buy order
         if order.side == sides.BUY:
@@ -133,7 +133,7 @@ class SpotExchange(Exchange):
         """
         import algorithex.services.logger as logger
 
-        if not jh.is_livetrading():
+        if not ah.is_livetrading():
             raise Exception('This method is only for live trading')
 
         old_balance = self.assets[self.settlement_currency]

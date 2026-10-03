@@ -4,7 +4,7 @@ import math
 import numpy as np
 import pytest
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 # This mirrors what Starlette's JSONResponse does internally: it renders with
@@ -55,7 +55,7 @@ def test_cleaned_chart_data_is_json_compliant():
     raw = _sample_chart_data()
 
     # Exactly the composition the controller now applies.
-    cleaned = jh.clean_nan_values(jh.clean_infinite_values(raw))
+    cleaned = ah.clean_nan_values(ah.clean_infinite_values(raw))
 
     # Must not raise anymore.
     serialized = _render_like_jsonresponse(cleaned)
@@ -78,7 +78,7 @@ def test_cleaned_chart_data_is_json_compliant():
 
 def test_clean_infinite_values_alone_leaves_nan():
     """Regression guard documenting why both cleaners are required."""
-    only_inf_cleaned = jh.clean_infinite_values({'v': float('nan')})
+    only_inf_cleaned = ah.clean_infinite_values({'v': float('nan')})
     assert math.isnan(only_inf_cleaned['v'])
     with pytest.raises(ValueError):
         _render_like_jsonresponse(only_inf_cleaned)

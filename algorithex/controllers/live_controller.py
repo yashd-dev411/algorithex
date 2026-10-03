@@ -17,7 +17,7 @@ from algorithex.services.web import (
     UpdateLiveSessionNotesRequestJson,
     UpdateLiveSessionStateRequestJson
 )
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.repositories import live_session_repository
 from algorithex.services import transformers
 from algorithex.modes.data_provider import download_live_log
@@ -31,9 +31,9 @@ def live(request_json: LiveRequestJson) -> JSONResponse:
     """
     Start live/paper trading (Algorithex local mode)
     """
-    jh.validate_cwd()
+    ah.validate_cwd()
 
-    if not jh.has_live_trade_plugin():
+    if not ah.has_live_trade_plugin():
         if request_json.paper_mode is True:
             # Local paper simulation stub: record the session so the dashboard
             # works offline. Real-time exchange execution is follow-up work;
@@ -126,7 +126,7 @@ def get_logs(json_request: GetLogsRequestJson) -> JSONResponse:
     """
     Get logs for a live trading session
     """
-    if not jh.has_live_trade_plugin():
+    if not ah.has_live_trade_plugin():
         return JSONResponse({'id': json_request.id, 'data': [], 'mode': 'local-simulated'}, status_code=200)
     from algorithex_live.services.data_provider import get_logs
 
@@ -160,7 +160,7 @@ def get_orders(json_request: GetOrdersRequestJson) -> JSONResponse:
     """
     Get orders for a live trading session
     """
-    if not jh.has_live_trade_plugin():
+    if not ah.has_live_trade_plugin():
         return JSONResponse({'id': json_request.id, 'data': [], 'mode': 'local-simulated'}, status_code=200)
     from algorithex_live.services.data_provider import get_orders
 
@@ -367,7 +367,7 @@ def get_equity_curve(
                 from_ms = session.created_at
             else:
                 # fallback: last 24h
-                from_ms = jh.now(True) - (24 * 60 * 60 * 1000)
+                from_ms = ah.now(True) - (24 * 60 * 60 * 1000)
 
         result = live_equity_repository.query_equity_curve(
             session_id=session_id,

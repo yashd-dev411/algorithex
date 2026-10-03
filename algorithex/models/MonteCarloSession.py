@@ -3,7 +3,7 @@ import json
 from itertools import chain
 import numpy as np
 from algorithex.services.db import database
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 # ASCII JSON keeps each SQL parameter at most 1 MiB, well below PostgreSQL's
@@ -79,7 +79,7 @@ class MonteCarloSession(peewee.Model):
         if isinstance(s, dict) and 'form' in s and isinstance(s['form'], dict):
             for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
                 if key in s['form']:
-                    s['form'][key] = jh.normalize_bool(s['form'].get(key))
+                    s['form'][key] = ah.normalize_bool(s['form'].get(key))
         return s
 
     @state_json.setter
@@ -261,7 +261,7 @@ def _store_results(model, session_id: str, completed: int, results: dict) -> Non
         model.update(
             results=serialized,
             completed_scenarios=completed,
-            updated_at=jh.now_to_timestamp(True),
+            updated_at=ah.now_to_timestamp(True),
         ).where(model.id == session_id).execute()
 
 
@@ -303,7 +303,7 @@ def get_monte_carlo_sessions(limit: int = 50, offset: int = 0, title_search: str
     
     # Apply date filter
     if date_filter and date_filter != 'all_time':
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
         
         if date_filter == '7_days':
             threshold = current_timestamp - (7 * 24 * 60 * 60 * 1000)
@@ -327,13 +327,13 @@ def store_monte_carlo_session(id: str, status: str, state: dict = None, strategy
     if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
         for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
             if key in state['form']:
-                state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                state['form'][key] = ah.normalize_bool(state['form'].get(key))
     d = {
         'id': id,
         'status': status,
         'state': json.dumps(state) if state else None,
-        'created_at': jh.now_to_timestamp(True),
-        'updated_at': jh.now_to_timestamp(True)
+        'created_at': ah.now_to_timestamp(True),
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     if strategy_codes is not None:
@@ -345,7 +345,7 @@ def store_monte_carlo_session(id: str, status: str, state: dict = None, strategy
 def update_monte_carlo_session_status(id: str, status: str) -> None:
     d = {
         'status': status,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     MonteCarloSession.update(**d).where(MonteCarloSession.id == id).execute()
 
@@ -357,14 +357,14 @@ def update_monte_carlo_session_state(id: str, state: dict, strategy_codes: dict 
     if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
         for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
             if key in state['form']:
-                state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                state['form'][key] = ah.normalize_bool(state['form'].get(key))
     existing = MonteCarloSession.select().where(MonteCarloSession.id == id).first()
     
     if existing:
         # Update existing session's state
         d = {
             'state': json.dumps(state),
-            'updated_at': jh.now_to_timestamp(True)
+            'updated_at': ah.now_to_timestamp(True)
         }
         if strategy_codes is not None:
             d['strategy_codes'] = json.dumps(strategy_codes)
@@ -375,8 +375,8 @@ def update_monte_carlo_session_state(id: str, state: dict, strategy_codes: dict 
             'id': id,
             'status': 'draft',
             'state': json.dumps(state),
-            'created_at': jh.now_to_timestamp(True),
-            'updated_at': jh.now_to_timestamp(True)
+            'created_at': ah.now_to_timestamp(True),
+            'updated_at': ah.now_to_timestamp(True)
         }
         MonteCarloSession.insert(**d).execute()
 
@@ -406,7 +406,7 @@ def delete_monte_carlo_session(id: str) -> bool:
 
 def update_monte_carlo_session_notes(id: str, title: str = None, description: str = None, strategy_codes: dict = None) -> None:
     d = {
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     if title is not None:
@@ -423,7 +423,7 @@ def update_monte_carlo_session_notes(id: str, title: str = None, description: st
 
 def purge_monte_carlo_sessions(days_old: int = None) -> int:
     try:
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
         
         if days_old is not None:
             days_old = int(days_old)
@@ -478,7 +478,7 @@ def get_running_monte_carlo_session_id():
 
 
 def _reconcile_monte_carlo_session_status(session: MonteCarloSession):
-    if session.status != 'running' or jh.is_unit_testing():
+    if session.status != 'running' or ah.is_unit_testing():
         return session
 
     from algorithex.services.redis import is_process_active
@@ -508,8 +508,8 @@ def store_trades_session(parent_id: str, num_scenarios: int) -> str:
         'num_scenarios': num_scenarios,
         'completed_scenarios': 0,
         'status': 'running',
-        'created_at': jh.now_to_timestamp(True),
-        'updated_at': jh.now_to_timestamp(True)
+        'created_at': ah.now_to_timestamp(True),
+        'updated_at': ah.now_to_timestamp(True)
     }
     MonteCarloTradesSession.insert(**d).execute()
     return session_id
@@ -521,7 +521,7 @@ def update_trades_session_progress(id: str, completed: int, results: dict = None
         return
     d = {
         'completed_scenarios': completed,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     MonteCarloTradesSession.update(**d).where(MonteCarloTradesSession.id == id).execute()
 
@@ -529,7 +529,7 @@ def update_trades_session_progress(id: str, completed: int, results: dict = None
 def update_trades_session_status(id: str, status: str) -> None:
     d = {
         'status': status,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     MonteCarloTradesSession.update(**d).where(MonteCarloTradesSession.id == id).execute()
 
@@ -555,8 +555,8 @@ def store_candles_session(parent_id: str, num_scenarios: int, pipeline_type: str
         'status': 'running',
         'pipeline_type': pipeline_type,
         'pipeline_params': json.dumps(pipeline_params),
-        'created_at': jh.now_to_timestamp(True),
-        'updated_at': jh.now_to_timestamp(True)
+        'created_at': ah.now_to_timestamp(True),
+        'updated_at': ah.now_to_timestamp(True)
     }
     MonteCarloCandlesSession.insert(**d).execute()
     return session_id
@@ -568,7 +568,7 @@ def update_candles_session_progress(id: str, completed: int, results: dict = Non
         return
     d = {
         'completed_scenarios': completed,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     MonteCarloCandlesSession.update(**d).where(MonteCarloCandlesSession.id == id).execute()
 
@@ -576,7 +576,7 @@ def update_candles_session_progress(id: str, completed: int, results: dict = Non
 def update_candles_session_status(id: str, status: str) -> None:
     d = {
         'status': status,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     MonteCarloCandlesSession.update(**d).where(MonteCarloCandlesSession.id == id).execute()
 
@@ -587,7 +587,7 @@ def store_session_exception(session_id: str, session_type: str, exception: str, 
         'exception': exception,
         'traceback': traceback,
         'status': 'stopped',
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     if session_type == 'trades':
@@ -603,7 +603,7 @@ def append_session_logs(session_id: str, session_type: str, log_message: str) ->
         new_logs = current_logs + log_message + '\n'
         MonteCarloTradesSession.update(
             logs=new_logs,
-            updated_at=jh.now_to_timestamp(True)
+            updated_at=ah.now_to_timestamp(True)
         ).where(MonteCarloTradesSession.id == session_id).execute()
     elif session_type == 'candles':
         session = MonteCarloCandlesSession.get(MonteCarloCandlesSession.id == session_id)
@@ -611,7 +611,7 @@ def append_session_logs(session_id: str, session_type: str, log_message: str) ->
         new_logs = current_logs + log_message + '\n'
         MonteCarloCandlesSession.update(
             logs=new_logs,
-            updated_at=jh.now_to_timestamp(True)
+            updated_at=ah.now_to_timestamp(True)
         ).where(MonteCarloCandlesSession.id == session_id).execute()
 
 
@@ -623,11 +623,11 @@ def append_monte_carlo_session_logs(session_id: str, log_message: str) -> None:
         new_logs = current_logs + log_message + '\n'
         MonteCarloSession.update(
             logs=new_logs,
-            updated_at=jh.now_to_timestamp(True)
+            updated_at=ah.now_to_timestamp(True)
         ).where(MonteCarloSession.id == session_id).execute()
     except Exception as e:
         # Session doesn't exist yet, silently fail
-        jh.dump(f'exception: {e}')
+        ah.dump(f'exception: {e}')
         raise
         pass
 

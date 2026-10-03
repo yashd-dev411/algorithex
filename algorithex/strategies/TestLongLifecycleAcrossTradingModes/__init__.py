@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import utils
 from algorithex.config import config
 from algorithex.enums import order_types
@@ -87,7 +87,7 @@ class TestLongLifecycleAcrossTradingModes(Strategy):
             # This makes the quote-wallet delta intentionally differ from the
             # trade model's quote-denominated fee calculation: quote proceeds
             # are 0.999 BTC at 12 and 14, each charged a 0.1% sell fee.
-            assert jh.base_asset(self.symbol) == 'BTC'
+            assert ah.base_asset(self.symbol) == 'BTC'
             assert exchange.assets['BTC'] == 0
             assert round(exchange.wallet_balance, 8) == 10_005.948026
             assert round(closed_trade.fee, 8) == 0.045974

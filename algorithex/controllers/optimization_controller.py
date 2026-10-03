@@ -9,7 +9,7 @@ import json
 from algorithex.services.auth import require_auth, require_auth_token
 from algorithex.services.multiprocessing import process_manager
 from algorithex.services.web import OptimizationRequestJson, CancelRequestJson, UpdateOptimizationSessionStateRequestJson, UpdateOptimizationSessionStatusRequestJson, TerminateOptimizationRequestJson, UpdateOptimizationSessionNotesRequestJson, GetOptimizationSessionsRequestJson
-from algorithex import helpers as jh
+from algorithex import helpers as ah
 from algorithex.models.OptimizationSession import get_optimization_sessions as get_sessions, store_optimization_session, update_optimization_session_state, update_optimization_session_status, delete_optimization_session, reset_optimization_session, update_optimization_session_notes, purge_optimization_sessions, get_running_optimization_session_id
 from algorithex.services.transformers import get_optimization_session, get_optimization_session_for_load_more
 from algorithex.models.OptimizationSession import get_optimization_session_by_id as get_optimization_session_by_id_from_db
@@ -25,7 +25,7 @@ async def optimization(request_json: OptimizationRequestJson):
     Start an optimization process
     """
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     # Validate routes
     if not request_json.routes or len(request_json.routes) == 0:
@@ -35,7 +35,7 @@ async def optimization(request_json: OptimizationRequestJson):
         }, status_code=400)
 
     # Generate unique session ID if not provided
-    session_id = request_json.id or jh.generate_unique_id()
+    session_id = request_json.id or ah.generate_unique_id()
 
     # Check if session already exists
     existing_session = get_optimization_session_by_id_from_db(session_id)
@@ -77,7 +77,7 @@ async def rerun_optimization(request_json: OptimizationRequestJson):
     Start an optimization process
     """
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     # Get the session from the database
     session = get_optimization_session_by_id_from_db(request_json.id)
@@ -214,7 +214,7 @@ async def resume_optimization(request_json: OptimizationRequestJson):
     Resume an optimization process
     """
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     # Get the session from the database
     session = get_optimization_session_by_id_from_db(request_json.id)

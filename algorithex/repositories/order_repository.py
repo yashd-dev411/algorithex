@@ -1,7 +1,7 @@
 from typing import Optional, List, Tuple
 import uuid
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from peewee import Cast
 from algorithex.models import Candle
 from algorithex.models.Order import Order
@@ -12,7 +12,7 @@ from algorithex.services.db import database
 
 
 def create(order_data: dict) -> Order:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     if not database.is_open():
@@ -28,8 +28,8 @@ def create(order_data: dict) -> Order:
         'reduce_only': order_data.get('reduce_only'),
         'qty': order_data.get('qty'),
         'status': order_data.get('status'),
-        'created_at': order_data.get('created_at', jh.now_to_timestamp()),
-        'updated_at': order_data.get('updated_at', jh.now_to_timestamp()),
+        'created_at': order_data.get('created_at', ah.now_to_timestamp()),
+        'updated_at': order_data.get('updated_at', ah.now_to_timestamp()),
         'session_mode': config['app']['trading_mode'],
     }
     
@@ -60,12 +60,12 @@ def create(order_data: dict) -> Order:
             database.db.rollback()
         except Exception:
             pass
-        jh.dump(f"Error storing order in database: {e}")
+        ah.dump(f"Error storing order in database: {e}")
         raise
 
 
 def update(order: Order) -> None:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     if not database.is_open():
@@ -90,7 +90,7 @@ def update(order: Order) -> None:
 
     if db_order:
         d = {
-            'updated_at': jh.now_to_timestamp(),
+            'updated_at': ah.now_to_timestamp(),
             'status': order.status,
             'filled_qty': order.filled_qty,
             'price': db_order.price if order.price == 0 else order.price,
@@ -101,9 +101,9 @@ def update(order: Order) -> None:
             d['vars'] = order.vars
         
         if order.is_executed:
-            d['executed_at'] = getattr(order, 'executed_at', jh.now_to_timestamp())
+            d['executed_at'] = getattr(order, 'executed_at', ah.now_to_timestamp())
         if order.is_canceled:
-            d['canceled_at'] = jh.now_to_timestamp()
+            d['canceled_at'] = ah.now_to_timestamp()
         if order.trade_id:
             d['trade_id'] = order.trade_id
         if order.submitted_via:
@@ -121,12 +121,12 @@ def update(order: Order) -> None:
                 database.db.rollback()
             except Exception:
                 pass
-            jh.dump(f"Error updating order in database: {e}")
+            ah.dump(f"Error updating order in database: {e}")
             raise
 
 
 def store_or_update(order: Order) -> None:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     if not database.is_open():
@@ -165,8 +165,8 @@ def store_or_update(order: Order) -> None:
         'reduce_only': order.reduce_only,
         'qty': order.qty,
         'status': order.status,
-        'created_at': order.created_at if order.created_at else jh.now_to_timestamp(),
-        'updated_at': order.updated_at if order.updated_at else jh.now_to_timestamp(),
+        'created_at': order.created_at if order.created_at else ah.now_to_timestamp(),
+        'updated_at': order.updated_at if order.updated_at else ah.now_to_timestamp(),
         'session_mode': config['app']['trading_mode'],
     }
     if hasattr(order, 'trade_id'):
@@ -201,11 +201,11 @@ def store_or_update(order: Order) -> None:
             database.db.rollback()
         except Exception:
             pass
-        jh.dump(f"Error storing order in database: {e}")
+        ah.dump(f"Error storing order in database: {e}")
 
 
 def find_by_id(order_id: str) -> Optional[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     if not database.is_open():
@@ -218,7 +218,7 @@ def find_by_id(order_id: str) -> Optional[Order]:
 
 
 def find_by_exchange_id(exchange_id: str) -> Optional[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     if not database.is_open():
@@ -231,7 +231,7 @@ def find_by_exchange_id(exchange_id: str) -> Optional[Order]:
 
 
 def find_by_exchange_or_client_id(order_dict: dict) -> Optional[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     if not database.is_open():
@@ -259,7 +259,7 @@ def find_by_exchange_or_client_id(order_dict: dict) -> Optional[Order]:
 
 
 def find_by_vars(exchange: str, symbol: str, vars: dict) -> Optional[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     if not database.is_open():
@@ -270,7 +270,7 @@ def find_by_vars(exchange: str, symbol: str, vars: dict) -> Optional[Order]:
     return None
 
 def find_by_partial_id(partial_id: str, exchange: str = None, symbol: str = None) -> List[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     if not database.is_open():
@@ -288,7 +288,7 @@ def find_by_partial_id(partial_id: str, exchange: str = None, symbol: str = None
 
 
 def find_by_trade_id(trade_id: str) -> List[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     if not database.is_open():
@@ -298,7 +298,7 @@ def find_by_trade_id(trade_id: str) -> List[Order]:
 
 
 def get_active_orders(symbol: str, exchange: str) -> List[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     if not database.is_open():
@@ -319,7 +319,7 @@ def get_active_orders(symbol: str, exchange: str) -> List[Order]:
 
 
 def get_executed_and_active_orders_without_trade_id(symbol: str, exchange: str) -> Tuple[List[Order], List[Order]]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return [], []
 
     if not database.is_open():
@@ -346,7 +346,7 @@ def get_executed_and_active_orders_without_trade_id(symbol: str, exchange: str) 
 
 
 def get_session_orders(session_id: str, exchange: str, symbol: str) -> List[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     if not database.is_open():
@@ -360,7 +360,7 @@ def get_session_orders(session_id: str, exchange: str, symbol: str) -> List[Orde
 
 
 def get_last_exchange_order(exchange: str, symbol: str) -> Optional[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     if not database.is_open():
@@ -379,7 +379,7 @@ def get_last_exchange_order(exchange: str, symbol: str) -> Optional[Order]:
 
 
 def get_simulated_orders(exchange: str, symbol: str, qty: float = None) -> List[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     if not database.is_open():
@@ -406,7 +406,7 @@ def find_by_filters(
     limit: int = 50,
     offset: int = 0
 ) -> List[Order]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     if not database.is_open():
@@ -445,7 +445,7 @@ def find_by_filters(
         query = query.where(Order.side.contains(side_filter))
 
     if date_filter:
-        cutoff_timestamp = jh.now_to_timestamp()
+        cutoff_timestamp = ah.now_to_timestamp()
         if date_filter == '7_days':
             cutoff_timestamp -= 7 * 24 * 60 * 60 * 1000
         elif date_filter == '30_days':
@@ -470,7 +470,7 @@ def find_by_filters(
 
 
 def delete(order_id: str) -> None:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     if not database.is_open():

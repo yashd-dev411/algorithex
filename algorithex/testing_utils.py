@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.config import reset_config
 from algorithex.enums import exchanges
 from algorithex.factories import candles_from_close_prices
@@ -8,14 +8,14 @@ from algorithex.config import config
 
 def get_btc_and_eth_candles():
     candles = {
-        jh.key(exchanges.SANDBOX, 'BTC-USDT'): {
+        ah.key(exchanges.SANDBOX, 'BTC-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'BTC-USDT',
             'candles': candles_from_close_prices(range(101, 200)),
         }
     }
 
-    candles[jh.key(exchanges.SANDBOX, 'ETH-USDT')] = {
+    candles[ah.key(exchanges.SANDBOX, 'ETH-USDT')] = {
         'exchange': exchanges.SANDBOX,
         'symbol': 'ETH-USDT',
         'candles': candles_from_close_prices(range(1, 100))
@@ -25,7 +25,7 @@ def get_btc_and_eth_candles():
 
 def get_btc_candles(candles_count=100):
     return {
-        jh.key(exchanges.SANDBOX, 'BTC-USDT'): {
+        ah.key(exchanges.SANDBOX, 'BTC-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'BTC-USDT',
             'candles': candles_from_close_prices(range(1, candles_count)),
@@ -35,7 +35,7 @@ def get_btc_candles(candles_count=100):
 
 def get_downtrend_candles(candles_count=100):
     return {
-        jh.key(exchanges.SANDBOX, 'BTC-USDT'): {
+        ah.key(exchanges.SANDBOX, 'BTC-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'BTC-USDT',
             'candles': candles_from_close_prices(range(candles_count, 10, -1)),

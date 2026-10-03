@@ -11,7 +11,7 @@ from algorithex.modes.backtest_mode import simulator
 from algorithex.config import config as algorithex_config, reset_config, set_config
 from algorithex.routes import router
 from algorithex.store import store
-import algorithex.helpers as jh 
+import algorithex.helpers as ah 
 
 
 def _validate_observed_one_minute_candles(candles: dict) -> None:
@@ -238,7 +238,7 @@ def _execute_isolated_backtest(
             for candle_data in trading_candles_dict.values()
         )
         for c in algorithex_config['app']['considering_candles']:
-            key = jh.key(c[0], c[1])
+            key = ah.key(c[0], c[1])
             # inject warm-up candles
             candle_service.inject_warmup_candles_to_store(
                 warmup_candles_dict[key]['candles'],

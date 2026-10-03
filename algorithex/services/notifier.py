@@ -1,5 +1,5 @@
 import requests
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from timeloop import Timeloop
 from datetime import timedelta
 
@@ -70,7 +70,7 @@ def notify(msg: str, webhook=None) -> None:
 def _telegram(msg: str, token: str, chat_id: str) -> None:
     from algorithex.services import logger
 
-    if not token or not jh.get_config('env.notifications.enabled'):
+    if not token or not ah.get_config('env.notifications.enabled'):
         return
 
     try:
@@ -90,7 +90,7 @@ def _telegram(msg: str, token: str, chat_id: str) -> None:
 def _discord(msg: str, webhook_address=None) -> None:
     from algorithex.services import logger
 
-    if not jh.get_config('env.notifications.enabled'):
+    if not ah.get_config('env.notifications.enabled'):
         return
 
     try:
@@ -107,7 +107,7 @@ def _discord(msg: str, webhook_address=None) -> None:
 def _slack(msg: str, webhook_address) -> None:
     from algorithex.services import logger
 
-    if not jh.get_config('env.notifications.enabled'):
+    if not ah.get_config('env.notifications.enabled'):
         return
 
     payload = {

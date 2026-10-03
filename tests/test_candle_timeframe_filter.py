@@ -1,7 +1,7 @@
 import peewee
 import pytest
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models.Candle import Candle
 from algorithex.services import candle_service
 
@@ -12,7 +12,7 @@ from algorithex.services import candle_service
 
 EXCHANGE = 'Sandbox'
 SYMBOL = 'BTC-USD'
-START = jh.date_to_timestamp('2023-01-01')
+START = ah.date_to_timestamp('2023-01-01')
 MINUTES = 10
 FINISH = START + (MINUTES - 1) * 60_000
 
@@ -36,7 +36,7 @@ LEGACY_SCHEMA = """
 
 def _candle_row(timestamp: int, timeframe) -> dict:
     return {
-        'id': jh.generate_unique_id(),
+        'id': ah.generate_unique_id(),
         'timestamp': timestamp,
         'open': 100,
         'close': 110,

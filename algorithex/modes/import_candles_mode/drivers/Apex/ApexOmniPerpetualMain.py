@@ -1,5 +1,5 @@
 import requests
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from typing import Union
 from algorithex import exceptions
@@ -27,9 +27,9 @@ class ApexOmniPerpetualMain(CandleExchange):
     )
 
     def get_starting_time(self, symbol: str) -> Union[int, None]:
-        dashless_symbol = jh.dashless_symbol(symbol)
+        dashless_symbol = ah.dashless_symbol(symbol)
         window_start = 1514811660
-        window_end = int(jh.now_to_timestamp() / 1000)
+        window_end = int(ah.now_to_timestamp() / 1000)
         first_timestamp = None
         for interval, window_seconds, look_back in self._FIRST_CANDLE_STEPS:
             step_start = max(window_start - look_back, 0)
@@ -56,7 +56,7 @@ class ApexOmniPerpetualMain(CandleExchange):
         return first_timestamp
 
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> Union[list, None]:
-        dashless_symbol = jh.dashless_symbol(symbol)
+        dashless_symbol = ah.dashless_symbol(symbol)
         interval = timeframe_to_interval(timeframe)
 
         payload = {
@@ -78,7 +78,7 @@ class ApexOmniPerpetualMain(CandleExchange):
 
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

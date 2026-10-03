@@ -1,6 +1,6 @@
 from typing import List, Optional
 import json
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models.LiveSession import LiveSession
 from algorithex.services.db import database
 from algorithex.enums import live_session_statuses
@@ -17,7 +17,7 @@ def get_live_session_by_id(session_id: str) -> Optional[LiveSession]:
     """
     Get a single live session by ID
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
     
     _ensure_db_open()
@@ -40,7 +40,7 @@ def get_live_sessions(
     Returns a list of LiveSession objects sorted by most recently updated with pagination and filters.
     Excludes draft sessions by default.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
     
     _ensure_db_open()
@@ -62,7 +62,7 @@ def get_live_sessions(
     
     # Apply date filter
     if date_filter and date_filter != 'all_time':
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
         
         if date_filter == '7_days':
             threshold = current_timestamp - (7 * 24 * 60 * 60 * 1000)
@@ -89,7 +89,7 @@ def store_live_session(
     """
     Create or update a live session record
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()
@@ -107,13 +107,13 @@ def store_live_session(
             'finished_at': None,
             'exception': None,
             'traceback': None,
-            'updated_at': jh.now_to_timestamp(True)
+            'updated_at': ah.now_to_timestamp(True)
         }
         if state:
             if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
                 for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
                     if key in state['form']:
-                        state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                        state['form'][key] = ah.normalize_bool(state['form'].get(key))
             d['state'] = json.dumps(state)
 
         LiveSession.update(**d).where(LiveSession.id == id).execute()
@@ -125,14 +125,14 @@ def store_live_session(
             'session_mode': session_mode,
             'exchange': exchange,
             'state': None,
-            'created_at': jh.now_to_timestamp(True),
-            'updated_at': jh.now_to_timestamp(True)
+            'created_at': ah.now_to_timestamp(True),
+            'updated_at': ah.now_to_timestamp(True)
         }
         if state:
             if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
                 for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
                     if key in state['form']:
-                        state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                        state['form'][key] = ah.normalize_bool(state['form'].get(key))
             d['state'] = json.dumps(state)
         
         LiveSession.insert(**d).execute()
@@ -142,14 +142,14 @@ def update_live_session_status(id: str, status: str) -> None:
     """
     Update the status of a live session
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()
     
     d = {
         'status': status,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     LiveSession.update(**d).where(LiveSession.id == id).execute()
@@ -159,7 +159,7 @@ def update_live_session_state(id: str, state: dict) -> None:
     """
     Update the state of a live session
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()
@@ -167,11 +167,11 @@ def update_live_session_state(id: str, state: dict) -> None:
     if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
         for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
             if key in state['form']:
-                state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                state['form'][key] = ah.normalize_bool(state['form'].get(key))
     
     d = {
         'state': json.dumps(state),
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     LiveSession.update(**d).where(LiveSession.id == id).execute()
@@ -181,7 +181,7 @@ def upsert_live_session_state(id: str, state: dict) -> None:
     """
     Create or update the state of a live session. If session doesn't exist, creates as draft.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()
@@ -189,7 +189,7 @@ def upsert_live_session_state(id: str, state: dict) -> None:
     if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
         for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
             if key in state['form']:
-                state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                state['form'][key] = ah.normalize_bool(state['form'].get(key))
     
     existing_session = get_live_session_by_id(id)
     
@@ -197,7 +197,7 @@ def upsert_live_session_state(id: str, state: dict) -> None:
         # Update existing session's state
         d = {
             'state': json.dumps(state),
-            'updated_at': jh.now_to_timestamp(True)
+            'updated_at': ah.now_to_timestamp(True)
         }
         LiveSession.update(**d).where(LiveSession.id == id).execute()
     else:
@@ -211,8 +211,8 @@ def upsert_live_session_state(id: str, state: dict) -> None:
             'session_mode': session_mode,
             'exchange': exchange,
             'state': json.dumps(state),
-            'created_at': jh.now_to_timestamp(True),
-            'updated_at': jh.now_to_timestamp(True)
+            'created_at': ah.now_to_timestamp(True),
+            'updated_at': ah.now_to_timestamp(True)
         }
         LiveSession.insert(**d).execute()
 
@@ -226,13 +226,13 @@ def update_live_session_notes(
     """
     Update the notes (title, description, strategy_codes) of a live session
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()
     
     d = {
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     if title is not None:
@@ -251,14 +251,14 @@ def update_live_session_finished(id: str, finished_at: int = None) -> None:
     """
     Mark a live session as finished with the finish timestamp
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()
     
     d = {
-        'finished_at': finished_at if finished_at else jh.now_to_timestamp(True),
-        'updated_at': jh.now_to_timestamp(True)
+        'finished_at': finished_at if finished_at else ah.now_to_timestamp(True),
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     LiveSession.update(**d).where(LiveSession.id == id).execute()
@@ -268,7 +268,7 @@ def store_live_session_exception(id: str, exception: str, traceback: str) -> Non
     """
     Store exception information for a live session
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()
@@ -276,7 +276,7 @@ def store_live_session_exception(id: str, exception: str, traceback: str) -> Non
     d = {
         'exception': exception,
         'traceback': traceback,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     LiveSession.update(**d).where(LiveSession.id == id).execute()
@@ -286,7 +286,7 @@ def delete_live_session(session_id: str) -> bool:
     """
     Delete a live session from the database
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return True
     
     _ensure_db_open()
@@ -295,7 +295,7 @@ def delete_live_session(session_id: str) -> bool:
         LiveSession.delete().where(LiveSession.id == session_id).execute()
         return True
     except Exception as e:
-        jh.debug(f"Error deleting live session: {e}")
+        ah.debug(f"Error deleting live session: {e}")
         return False
 
 
@@ -304,13 +304,13 @@ def purge_live_sessions(days_old: int = None) -> int:
     Purge live sessions older than specified days
     Returns the number of sessions deleted
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return 0
     
     _ensure_db_open()
     
     try:
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
         
         if days_old is not None:
             days_old = int(days_old)
@@ -342,6 +342,6 @@ def purge_live_sessions(days_old: int = None) -> int:
         
         return deleted_count
     except Exception as e:
-        jh.debug(f"Error purging live sessions: {e}")
+        ah.debug(f"Error purging live sessions: {e}")
         return 0
 

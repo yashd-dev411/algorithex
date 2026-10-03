@@ -89,9 +89,9 @@ def get_trades_live_history(
         }, status_code=200)
     except Exception as e:
         import traceback
-        import algorithex.helpers as jh
-        jh.debug(f"Error fetching trades history: {str(e)}")
-        jh.debug(traceback.format_exc())
+        import algorithex.helpers as ah
+        ah.debug(f"Error fetching trades history: {str(e)}")
+        ah.debug(traceback.format_exc())
         return JSONResponse({
             'error': str(e)
         }, status_code=500)

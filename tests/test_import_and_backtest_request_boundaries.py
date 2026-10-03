@@ -119,7 +119,7 @@ def test_import_start_validates_and_publishes_running_before_worker(
     api_client,
 ):
     events = []
-    monkeypatch.setattr(candles_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(candles_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         import_candles_mode,
         'validate_import_request',
@@ -152,7 +152,7 @@ def test_import_validation_error_is_serialized_without_starting_worker(
 ):
     outcomes = []
     starts = []
-    monkeypatch.setattr(candles_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(candles_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         import_candles_mode,
         'validate_import_request',
@@ -192,7 +192,7 @@ def test_import_rejects_invalid_public_values_before_start(
 ):
     starts = []
     payload = {**_import_payload(), **invalid_values}
-    monkeypatch.setattr(candles_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(candles_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(import_candles_mode, 'store_import_outcome', lambda *args: None)
     monkeypatch.setattr(
         candles_controller.process_manager,
@@ -362,7 +362,7 @@ def test_backtest_start_failure_is_persisted_and_serialized(
     api_client,
 ):
     events = []
-    monkeypatch.setattr(backtest_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(backtest_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         backtest_controller,
         'update_backtest_session_state',
@@ -467,7 +467,7 @@ def test_backtest_session_read_serializes_terminal_failure(
 
 def test_backtest_cancellation_is_checked_on_the_execution_path(monkeypatch):
     executions = []
-    monkeypatch.setattr(backtest_mode.jh, 'is_unit_testing', lambda: False)
+    monkeypatch.setattr(backtest_mode.ah, 'is_unit_testing', lambda: False)
     monkeypatch.setattr(backtest_mode, 'is_process_active', lambda session_id: False)
     monkeypatch.setattr(backtest_mode, 'register_custom_exception_handler', lambda: None)
     monkeypatch.setattr(
@@ -497,8 +497,8 @@ def test_backtest_runtime_failure_is_persisted_once_with_its_type(monkeypatch):
         'algorithex.models.BacktestSession',
         fromlist=['store_backtest_session'],
     )
-    monkeypatch.setattr(backtest_mode.jh, 'is_unit_testing', lambda: True)
-    monkeypatch.setattr(backtest_mode.jh, 'should_execute_silently', lambda: False)
+    monkeypatch.setattr(backtest_mode.ah, 'is_unit_testing', lambda: True)
+    monkeypatch.setattr(backtest_mode.ah, 'should_execute_silently', lambda: False)
     monkeypatch.setattr(backtest_mode.router, 'initiate', lambda routes, data_routes: None)
     monkeypatch.setattr(backtest_mode.router, 'routes', [])
     monkeypatch.setattr(backtest_mode.store, 'reset', lambda: None)

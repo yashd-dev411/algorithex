@@ -1,7 +1,7 @@
 import requests
 from fastapi.responses import JSONResponse
 from algorithex.services.auth import get_access_token
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import json
 from algorithex.info import ALGORITHEX_API_URL
 
@@ -45,9 +45,9 @@ def report_exception(
 
         # attach exchange_log if there's any
         files = {}
-        if jh.file_exists(path_log):
+        if ah.file_exists(path_log):
             files['log_file'] = open(path_log, 'rb')
-        if path_exchange_log and jh.file_exists(path_exchange_log):
+        if path_exchange_log and ah.file_exists(path_exchange_log):
             files['exchange_log'] = open(path_exchange_log, 'rb')
             
         if not files:
@@ -57,9 +57,9 @@ def report_exception(
 
     from algorithex.version import __version__ as algorithex_version
     info = {
-        'os': jh.get_os(),
-        'python_version': '{}.{}'.format(*jh.python_version()),
-        'is_docker': jh.is_docker(),
+        'os': ah.get_os(),
+        'python_version': '{}.{}'.format(*ah.python_version()),
+        'is_docker': ah.is_docker(),
         'algorithex_version': algorithex_version
     }
     if has_live:

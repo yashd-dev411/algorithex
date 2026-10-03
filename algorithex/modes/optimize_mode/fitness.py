@@ -1,6 +1,6 @@
 import sys
 from math import log10
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.research.backtest import _isolated_backtest as isolated_backtest
 from algorithex.services import logger
 import numpy as np
@@ -57,25 +57,25 @@ def get_fitness(
             # Get the ratio based on objective function
             if objective_function_config == 'sharpe':
                 ratio = training_metrics['sharpe_ratio']
-                ratio_normalized = jh.normalize(ratio, -.5, 5)
+                ratio_normalized = ah.normalize(ratio, -.5, 5)
             elif objective_function_config == 'calmar':
                 ratio = training_metrics['calmar_ratio']
-                ratio_normalized = jh.normalize(ratio, -.5, 30)
+                ratio_normalized = ah.normalize(ratio, -.5, 30)
             elif objective_function_config == 'sortino':
                 ratio = training_metrics['sortino_ratio']
-                ratio_normalized = jh.normalize(ratio, -.5, 15)
+                ratio_normalized = ah.normalize(ratio, -.5, 15)
             elif objective_function_config == 'omega':
                 ratio = training_metrics['omega_ratio']
-                ratio_normalized = jh.normalize(ratio, -.5, 5)
+                ratio_normalized = ah.normalize(ratio, -.5, 5)
             elif objective_function_config == 'serenity':
                 ratio = training_metrics['serenity_index']
-                ratio_normalized = jh.normalize(ratio, -.5, 15)
+                ratio_normalized = ah.normalize(ratio, -.5, 15)
             elif objective_function_config == 'smart sharpe':
                 ratio = training_metrics['smart_sharpe']
-                ratio_normalized = jh.normalize(ratio, -.5, 5)
+                ratio_normalized = ah.normalize(ratio, -.5, 5)
             elif objective_function_config == 'smart sortino':
                 ratio = training_metrics['smart_sortino']
-                ratio_normalized = jh.normalize(ratio, -.5, 15)
+                ratio_normalized = ah.normalize(ratio, -.5, 15)
             else:
                 raise ValueError(
                     f'The entered ratio configuration `{objective_function_config}` for the optimization is unknown. '

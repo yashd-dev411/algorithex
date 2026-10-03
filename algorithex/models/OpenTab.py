@@ -1,6 +1,6 @@
 import peewee
 from algorithex.services.db import database
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 if database.is_closed():

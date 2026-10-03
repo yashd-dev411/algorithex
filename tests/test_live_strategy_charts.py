@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.controllers import live_controller
 from algorithex.services import redis as redis_service
 from algorithex.services import report
@@ -57,7 +57,7 @@ def test_strategy_chart_reports_skip_uninitialized_routes_and_empty_updates(monk
     )
     monkeypatch.setattr(report.router, 'routes', [route(None), route(strategy)])
 
-    key = jh.key('Sandbox', 'BTC-USDT', '1m')
+    key = ah.key('Sandbox', 'BTC-USDT', '1m')
     snapshot = report.strategy_charts()
     updates = report.strategy_charts_updates()
 
@@ -80,8 +80,8 @@ def test_strategy_chart_reports_keep_routes_separate(monkeypatch):
 
     updates = report.strategy_charts_updates()
 
-    assert updates[jh.key('Sandbox', 'BTC-USDT', '1m')]['lines']['EMA']['value'] == 10
-    assert updates[jh.key('Sandbox', 'ETH-USDT', '1m')]['lines']['EMA']['value'] == 20
+    assert updates[ah.key('Sandbox', 'BTC-USDT', '1m')]['lines']['EMA']['value'] == 10
+    assert updates[ah.key('Sandbox', 'ETH-USDT', '1m')]['lines']['EMA']['value'] == 20
 
 
 def test_live_charts_key_is_scoped_to_the_app_port(monkeypatch):
@@ -133,7 +133,7 @@ def test_redis_snapshot_failures_do_not_escape(monkeypatch):
 
     messages = []
     monkeypatch.setattr(redis_service, 'sync_redis', BrokenRedis())
-    monkeypatch.setattr(jh, 'terminal_debug', messages.append)
+    monkeypatch.setattr(ah, 'terminal_debug', messages.append)
 
     assert redis_service.store_live_charts_snapshot('session-1', {}) is False
     assert redis_service.get_live_charts_snapshot('session-1') == {}

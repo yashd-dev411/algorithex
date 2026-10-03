@@ -1,5 +1,5 @@
 import peewee
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import numpy as np
 
 
@@ -41,7 +41,7 @@ class Ticker(peewee.Model):
 def store_ticker_into_db(exchange: str, symbol: str, ticker: np.ndarray) -> None:
     return
     d = {
-        'id': jh.generate_unique_id(),
+        'id': ah.generate_unique_id(),
         'timestamp': ticker[0],
         'last_price': ticker[1],
         'high_price': ticker[2],
@@ -54,7 +54,7 @@ def store_ticker_into_db(exchange: str, symbol: str, ticker: np.ndarray) -> None
     def async_save() -> None:
         Ticker.insert(**d).on_conflict_ignore().execute()
         print(
-            jh.color(f'ticker: {jh.timestamp_to_time(d["timestamp"])}-{exchange}-{symbol}: {ticker}', 'yellow')
+            ah.color(f'ticker: {ah.timestamp_to_time(d["timestamp"])}-{exchange}-{symbol}: {ticker}', 'yellow')
         )
 
     # async call

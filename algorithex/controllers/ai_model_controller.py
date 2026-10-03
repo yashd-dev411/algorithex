@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from starlette.responses import JSONResponse
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.auth import require_auth
 from algorithex.services import transformers
 from algorithex.services.web import StoreAiModelRequestJson, DeleteAiModelRequestJson
@@ -46,13 +46,13 @@ def store_ai_model_endpoint(json_request: StoreAiModelRequestJson) -> JSONRespon
 
     try:
         ai_model: AiModel = AiModel.create(
-            id=jh.generate_unique_id(),
+            id=ah.generate_unique_id(),
             name=json_request.name,
             provider=json_request.provider,
             base_url=json_request.base_url,
             api_key=json_request.api_key,
             model_id=json_request.model_id,
-            created_at=jh.now_to_datetime(),
+            created_at=ah.now_to_datetime(),
         )
     except Exception as e:
         database.close_connection()

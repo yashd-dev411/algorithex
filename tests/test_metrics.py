@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import research
 from algorithex.factories import candles_from_close_prices
 from algorithex.services import metrics
@@ -132,7 +132,7 @@ def _run_metrics_backtest(
         'timeframe': '1m',
     }]
     candle_data = {
-        jh.key(EXCHANGE, SYMBOL): {
+        ah.key(EXCHANGE, SYMBOL): {
             'exchange': EXCHANGE,
             'symbol': SYMBOL,
             'candles': candles,
@@ -380,7 +380,7 @@ def test_no_trade_backtest_returns_zeroed_portfolio_metrics() -> None:
 #     ])
 #
 #     candles = {}
-#     key = jh.key(exchanges.SANDBOX, 'ETH-USDT')
+#     key = ah.key(exchanges.SANDBOX, 'ETH-USDT')
 #     candles[key] = {
 #         'exchange': exchanges.SANDBOX,
 #         'symbol': 'ETH-USDT',

@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pytest
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.indicators as ta
 from algorithex import research
 from algorithex.config import config
@@ -90,7 +90,7 @@ def _run_significance_test(strategy: type[Strategy]) -> dict:
         }],
         data_routes=[],
         candles={
-            jh.key(exchange, symbol): {
+            ah.key(exchange, symbol): {
                 'exchange': exchange,
                 'symbol': symbol,
                 'candles': candle_array,
@@ -130,7 +130,7 @@ def _alignment_inputs(strategy: str = 'TestRuleSignificanceAlignment') -> tuple:
         'timeframe': '1m',
     }]
     candles = {
-        jh.key(exchange, symbol): {
+        ah.key(exchange, symbol): {
             'exchange': exchange,
             'symbol': symbol,
             'candles': candle_array,
@@ -166,8 +166,8 @@ def _assert_research_runtime_is_clean() -> None:
     assert store.vars == {}
     assert store.exchanges.storage == {}
     assert store.orders.storage == {}
-    assert jh.is_backtesting() is False
-    assert jh.is_optimizing() is False
+    assert ah.is_backtesting() is False
+    assert ah.is_optimizing() is False
 
 
 def test_signal_only_backtest_uses_sparse_clock_events_and_atomic_data_routes():
@@ -195,7 +195,7 @@ def test_signal_only_backtest_uses_sparse_clock_events_and_atomic_data_routes():
     }]
     data_routes = [{'exchange': exchange, 'symbol': symbol, 'timeframe': '15m'}]
     candles = {
-        jh.key(exchange, symbol): {
+        ah.key(exchange, symbol): {
             'exchange': exchange,
             'symbol': symbol,
             'candles': candles_array,

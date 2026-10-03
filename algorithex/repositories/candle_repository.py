@@ -1,5 +1,5 @@
 from algorithex.models.Candle import Candle
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from collections.abc import Sequence
 from collections.abc import Iterator
 from typing import List, TYPE_CHECKING
@@ -274,7 +274,7 @@ def store_observed_candles(
         for offset in range(0, len(candles), OBSERVED_CANDLE_INSERT_BATCH_SIZE):
             rows = [
                 {
-                    'id': jh.generate_unique_id(),
+                    'id': ah.generate_unique_id(),
                     'exchange': exchange,
                     'symbol': symbol,
                     'timeframe': timeframe,
@@ -299,7 +299,7 @@ def store_candles_into_db(exchange: str, symbol: str, timeframe: str, candles: n
     candles_list = []
     for candle in candles:
         d = {
-            'id': jh.generate_unique_id(),
+            'id': ah.generate_unique_id(),
             'symbol': symbol,
             'exchange': exchange,
             'timestamp': candle[0],
@@ -327,7 +327,7 @@ def store_candles_into_db(exchange: str, symbol: str, timeframe: str, candles: n
 
 def store_candle_into_db(exchange: str, symbol: str, timeframe: str, candle: np.ndarray, on_conflict='ignore') -> None:
     d = {
-        'id': jh.generate_unique_id(),
+        'id': ah.generate_unique_id(),
         'exchange': exchange,
         'symbol': symbol,
         'timeframe': timeframe,

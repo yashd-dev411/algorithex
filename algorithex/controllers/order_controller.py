@@ -30,9 +30,9 @@ def get_order_by_id(order_id: str) -> JSONResponse:
         }, status_code=200)
     except Exception as e:
         import traceback
-        import algorithex.helpers as jh
-        jh.debug(f"Error fetching order {order_id}: {str(e)}")
-        jh.debug(traceback.format_exc())
+        import algorithex.helpers as ah
+        ah.debug(f"Error fetching order {order_id}: {str(e)}")
+        ah.debug(traceback.format_exc())
         return JSONResponse({
             'error': str(e)
         }, status_code=500)
@@ -65,9 +65,9 @@ def get_orders_live_history(
         }, status_code=200)
     except Exception as e:
         import traceback
-        import algorithex.helpers as jh
-        jh.debug(f"Error fetching orders history: {str(e)}")
-        jh.debug(traceback.format_exc())
+        import algorithex.helpers as ah
+        ah.debug(f"Error fetching orders history: {str(e)}")
+        ah.debug(traceback.format_exc())
         return JSONResponse({
             'error': str(e)
         }, status_code=500)

@@ -1,7 +1,7 @@
 import peewee
 import json
 from algorithex.services.db import database
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 if database.is_closed():
@@ -46,7 +46,7 @@ class SignificanceTestSession(peewee.Model):
         if isinstance(s, dict) and 'form' in s and isinstance(s['form'], dict):
             for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
                 if key in s['form']:
-                    s['form'][key] = jh.normalize_bool(s['form'].get(key))
+                    s['form'][key] = ah.normalize_bool(s['form'].get(key))
         return s
 
     @state_json.setter
@@ -112,7 +112,7 @@ def get_significance_test_sessions(
 
 
 def store_significance_test_session(id: str, status: str, state: dict, strategy_codes: dict = None, theme: str = 'light'):
-    now = jh.now_to_timestamp()
+    now = ah.now_to_timestamp()
     session = SignificanceTestSession.create(
         id=id,
         status=status,
@@ -128,7 +128,7 @@ def store_significance_test_session(id: str, status: str, state: dict, strategy_
 def update_significance_test_session_status(session_id: str, status: str):
     SignificanceTestSession.update(
         status=status,
-        updated_at=jh.now_to_timestamp(),
+        updated_at=ah.now_to_timestamp(),
     ).where(SignificanceTestSession.id == session_id).execute()
 
 
@@ -141,13 +141,13 @@ def update_significance_test_session_state(session_id: str, state: dict, strateg
     if existing:
         update_data = {
             'state': json.dumps(state),
-            'updated_at': jh.now_to_timestamp(),
+            'updated_at': ah.now_to_timestamp(),
         }
         if strategy_codes is not None:
             update_data['strategy_codes'] = json.dumps(strategy_codes)
         SignificanceTestSession.update(**update_data).where(SignificanceTestSession.id == session_id).execute()
     else:
-        now = jh.now_to_timestamp()
+        now = ah.now_to_timestamp()
         SignificanceTestSession.create(
             id=session_id,
             status='draft',
@@ -161,7 +161,7 @@ def update_significance_test_session_state(session_id: str, state: dict, strateg
 def update_significance_test_session_results(session_id: str, results: dict, chart_path: str = None):
     update_data = {
         'results': json.dumps(results),
-        'updated_at': jh.now_to_timestamp(),
+        'updated_at': ah.now_to_timestamp(),
     }
     if chart_path:
         update_data['chart_path'] = chart_path
@@ -169,7 +169,7 @@ def update_significance_test_session_results(session_id: str, results: dict, cha
 
 
 def update_significance_test_session_notes(session_id: str, title: str = None, description: str = None, strategy_codes: dict = None):
-    update_data = {'updated_at': jh.now_to_timestamp()}
+    update_data = {'updated_at': ah.now_to_timestamp()}
     if title is not None:
         update_data['title'] = title
     if description is not None:
@@ -183,7 +183,7 @@ def store_significance_test_exception(session_id: str, error: str, traceback_str
     SignificanceTestSession.update(
         exception=error,
         traceback=traceback_str,
-        updated_at=jh.now_to_timestamp(),
+        updated_at=ah.now_to_timestamp(),
     ).where(SignificanceTestSession.id == session_id).execute()
 
 
@@ -234,7 +234,7 @@ def get_running_significance_test_session_id():
 
 
 def _reconcile_significance_test_session_status(session: SignificanceTestSession):
-    if session.status != 'running' or jh.is_unit_testing():
+    if session.status != 'running' or ah.is_unit_testing():
         return session
 
     from algorithex.services.redis import is_process_active

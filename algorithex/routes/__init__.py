@@ -1,7 +1,7 @@
 import sys
 from typing import Dict, List, Any
 from algorithex.config import config
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import exceptions
 from algorithex.models.Route import Route
 
@@ -43,9 +43,9 @@ class RouterClass:
         # check to make sure if trading more than one route, they all have the same quote
         # currency because otherwise we cannot calculate the correct performance metrics
         if self.routes:
-            first_routes_quote = jh.quote_asset(self.routes[0].symbol)
+            first_routes_quote = ah.quote_asset(self.routes[0].symbol)
             for r in self.routes:
-                if jh.quote_asset(r.symbol) != first_routes_quote:
+                if ah.quote_asset(r.symbol) != first_routes_quote:
                     raise exceptions.InvalidRoutes('All trading routes must have the same quote asset.')
 
         trading_exchanges = set()
@@ -88,7 +88,7 @@ class RouterClass:
             # validate strategy that the strategy file exists (if sent as a string)
             if isinstance(r["strategy"], str):
                 strategy_name = r["strategy"]
-                if jh.is_unit_testing():
+                if ah.is_unit_testing():
                     path = sys.path[0]
                     # live plugin
                     if path.endswith('algorithex-live'):
@@ -96,9 +96,9 @@ class RouterClass:
                     # main framework
                     else:
                         strategies_dir = f'{sys.path[0]}/algorithex/strategies'
-                    exists = jh.file_exists(f"{strategies_dir}/{strategy_name}/__init__.py")
+                    exists = ah.file_exists(f"{strategies_dir}/{strategy_name}/__init__.py")
                 else:
-                    exists = jh.file_exists(f'strategies/{strategy_name}/__init__.py')
+                    exists = ah.file_exists(f'strategies/{strategy_name}/__init__.py')
             else:
                 exists = True
 

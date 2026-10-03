@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.notifier import notify
 from algorithex.services.redis import sync_publish
 import logging
@@ -9,29 +9,29 @@ LOGGERS = {}
 
 
 def _init_main_logger():
-    session_id = jh.get_session_id()
-    jh.make_directory('storage/logs/live-mode')
-    jh.make_directory('storage/logs/backtest-mode')
-    jh.make_directory('storage/logs/optimize-mode')
-    jh.make_directory('storage/logs/collect-mode')
-    jh.make_directory('storage/logs/monte-carlo-mode')
-    jh.make_directory('storage/logs/significance-test-mode')
+    session_id = ah.get_session_id()
+    ah.make_directory('storage/logs/live-mode')
+    ah.make_directory('storage/logs/backtest-mode')
+    ah.make_directory('storage/logs/optimize-mode')
+    ah.make_directory('storage/logs/collect-mode')
+    ah.make_directory('storage/logs/monte-carlo-mode')
+    ah.make_directory('storage/logs/significance-test-mode')
 
-    if jh.is_live():
+    if ah.is_live():
         filename = f'storage/logs/live-mode/{session_id}.txt'
-    elif jh.is_optimizing():
+    elif ah.is_optimizing():
         filename = f'storage/logs/optimize-mode/{session_id}.txt'
-    elif jh.is_backtesting():
+    elif ah.is_backtesting():
         filename = f'storage/logs/backtest-mode/{session_id}.txt'
-    elif jh.is_significance_testing():
+    elif ah.is_significance_testing():
         filename = f'storage/logs/significance-test-mode/{session_id}.txt'
     else:
         filename = 'storage/logs/etc.txt'
 
-    new_logger = logging.getLogger(jh.app_mode())
+    new_logger = logging.getLogger(ah.app_mode())
     new_logger.setLevel(logging.INFO)
     new_logger.addHandler(logging.FileHandler(filename, mode='w'))
-    LOGGERS[jh.app_mode()] = new_logger
+    LOGGERS[ah.app_mode()] = new_logger
 
 
 def create_logger_file(name):
@@ -49,31 +49,31 @@ def reset():
 
 
 def info(msg: str, send_notification=False, webhook=None) -> None:
-    if jh.app_mode() not in LOGGERS and (jh.is_live() or (jh.is_backtesting() and jh.is_debugging())):
+    if ah.app_mode() not in LOGGERS and (ah.is_live() or (ah.is_backtesting() and ah.is_debugging())):
         _init_main_logger()
 
     msg = str(msg)
     from algorithex.store import store
 
-    log_id = jh.generate_unique_id()
+    log_id = ah.generate_unique_id()
     log_dict = {
         'id': log_id,
         'session_id': store.app.session_id,
-        'timestamp': jh.now_to_timestamp(),
+        'timestamp': ah.now_to_timestamp(),
         'message': msg
     }
 
     store.logs.info.append(log_dict)
 
-    if jh.is_live():
+    if ah.is_live():
         sync_publish('info_log', log_dict)
 
-    if jh.is_live() or (jh.is_backtesting() and jh.is_debugging()):
-        msg = f"[INFO | {jh.timestamp_to_time(jh.now_to_timestamp())[:19]}] {msg}"
-        logger = LOGGERS[jh.app_mode()]
+    if ah.is_live() or (ah.is_backtesting() and ah.is_debugging()):
+        msg = f"[INFO | {ah.timestamp_to_time(ah.now_to_timestamp())[:19]}] {msg}"
+        logger = LOGGERS[ah.app_mode()]
         logger.info(msg)
 
-    if jh.is_live():
+    if ah.is_live():
         from algorithex.models.Log import store_log_into_db
         store_log_into_db(log_dict, 'info')
 
@@ -82,7 +82,7 @@ def info(msg: str, send_notification=False, webhook=None) -> None:
 
 
 def error(msg: str, send_notification=True) -> None:
-    if jh.app_mode() not in LOGGERS:
+    if ah.app_mode() not in LOGGERS:
         _init_main_logger()
 
     # error logs should be logged as info logs as well
@@ -91,27 +91,27 @@ def error(msg: str, send_notification=True) -> None:
     msg = str(msg)
     from algorithex.store import store
 
-    log_id = jh.generate_unique_id()
+    log_id = ah.generate_unique_id()
     log_dict = {
         'id': log_id,
         'session_id': store.app.session_id,
-        'timestamp': jh.now_to_timestamp(),
+        'timestamp': ah.now_to_timestamp(),
         'message': msg
     }
 
-    if jh.is_live() and jh.get_config('env.notifications.events.errors', True) and send_notification:
+    if ah.is_live() and ah.get_config('env.notifications.events.errors', True) and send_notification:
         notify(f'ERROR:\n{msg}')
-    if (jh.is_backtesting() and jh.is_debugging()) or jh.is_live():
+    if (ah.is_backtesting() and ah.is_debugging()) or ah.is_live():
         sync_publish('error_log', log_dict)
 
     store.logs.errors.append(log_dict)
 
-    if jh.is_live() or jh.is_optimizing():
-        msg = f"[ERROR | {jh.timestamp_to_time(jh.now_to_timestamp())[:19]}] {msg}"
-        logger = LOGGERS[jh.app_mode()]
+    if ah.is_live() or ah.is_optimizing():
+        msg = f"[ERROR | {ah.timestamp_to_time(ah.now_to_timestamp())[:19]}] {msg}"
+        logger = LOGGERS[ah.app_mode()]
         logger.error(msg)
 
-    if jh.is_live():
+    if ah.is_live():
         from algorithex.models.Log import store_log_into_db
         store_log_into_db(log_dict, 'error')
 
@@ -121,10 +121,10 @@ def log_exchange_message(exchange, message):
     if not isinstance(message, str):
         message = str(message)
 
-    formatted_time = jh.timestamp_to_time(jh.now())[:19]
+    formatted_time = ah.timestamp_to_time(ah.now())[:19]
     message = f'[{formatted_time} - {exchange}]: ' + message
 
-    session_id = jh.get_session_id()
+    session_id = ah.get_session_id()
     logger_name = f'live-mode/{session_id}-raw-exchange-logs'
 
     if logger_name not in LOGGERS:
@@ -144,7 +144,7 @@ def log_optimize_mode(message, session_id: str):
     if not isinstance(message, str):
         message = str(message)
 
-    formatted_time = jh.timestamp_to_time(jh.now())[:19]
+    formatted_time = ah.timestamp_to_time(ah.now())[:19]
     message = f'[{formatted_time}]: ' + message
     
     # Check if we're in a Ray worker process
@@ -169,15 +169,15 @@ def log_optimize_mode(message, session_id: str):
                 f.write(message + '\n')
                 f.flush()  # Ensure it's written immediately
         except Exception as e:
-            jh.dump('error')
+            ah.dump('error')
             print(f"Warning: Failed to write to optimize mode log file {log_file}: {e}")
 
     # The research API has no dashboard session or Redis consumer. Dashboard
     # optimizations keep publishing progress under their real session ID.
     if session_id != 'research':
         sync_publish('log', {
-            'id': jh.generate_unique_id(),
-            'timestamp': jh.now_to_timestamp(),
+            'id': ah.generate_unique_id(),
+            'timestamp': ah.now_to_timestamp(),
             'message': message
         })
 
@@ -188,7 +188,7 @@ def log_monte_carlo(message, session_id: str):
     if not isinstance(message, str):
         message = str(message)
 
-    formatted_time = jh.timestamp_to_time(jh.now())[:19]
+    formatted_time = ah.timestamp_to_time(ah.now())[:19]
     message = f'[{formatted_time}]: ' + message
 
     # Check if we're in a Ray worker process
@@ -218,8 +218,8 @@ def log_monte_carlo(message, session_id: str):
 
     # Always publish to redis for real-time updates
     sync_publish('log', {
-        'id': jh.generate_unique_id(),
-        'timestamp': jh.now_to_timestamp(),
+        'id': ah.generate_unique_id(),
+        'timestamp': ah.now_to_timestamp(),
         'message': message
     })
 
@@ -228,7 +228,7 @@ def broadcast_error_without_logging(msg: str):
     msg = str(msg)
 
     sync_publish('error_log', {
-        'id': jh.generate_unique_id(),
-        'timestamp': jh.now_to_timestamp(),
+        'id': ah.generate_unique_id(),
+        'timestamp': ah.now_to_timestamp(),
         'message': msg
     })

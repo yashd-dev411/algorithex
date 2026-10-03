@@ -129,7 +129,7 @@ def _configure_import(monkeypatch, state, driver, fixed_now):
         lambda exchange, symbol, timeframe, candles: state.setdefault('stored', []).extend(candles),
     )
     monkeypatch.setattr(importer.arrow, 'utcnow', lambda: fixed_now)
-    monkeypatch.setattr(importer.jh, 'now_to_timestamp', lambda: fixed_now.int_timestamp * 1000 - 1)
+    monkeypatch.setattr(importer.ah, 'now_to_timestamp', lambda: fixed_now.int_timestamp * 1000 - 1)
     monkeypatch.setattr(importer.time, 'sleep', lambda seconds: None)
     monkeypatch.setattr(importer, 'sync_publish', lambda event, payload: None)
     monkeypatch.setattr(database, 'open_connection', lambda: database_events.append('open'))
@@ -413,7 +413,7 @@ def test_backup_exchange_fetches_and_stores_when_database_range_is_absent(monkey
     fetches = []
     backup = _FakeDriver(fetches, count=2)
     monkeypatch.setattr(importer, 'Candle', _candle_model(state))
-    monkeypatch.setattr(importer.jh, 'now_to_timestamp', lambda: start + 119_999)
+    monkeypatch.setattr(importer.ah, 'now_to_timestamp', lambda: start + 119_999)
     monkeypatch.setattr(importer.time, 'sleep', lambda seconds: None)
 
     def store(candles):

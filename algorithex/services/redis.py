@@ -7,7 +7,7 @@ from redis.exceptions import (
 import simplejson as json
 import asyncio
 import time
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.libs.custom_json import NpEncoder
 import os
 import base64
@@ -25,8 +25,8 @@ async def init_redis():
 async_redis = None
 sync_redis = None
 _last_active_check_error_at = 0
-if jh.is_algorithex_project():
-    if not jh.is_notebook():
+if ah.is_algorithex_project():
+    if not ah.is_notebook():
         async_redis = asyncio.run(init_redis())
         sync_redis = sync_redis_lib.Redis(
             host=ENV_VALUES['REDIS_HOST'], port=ENV_VALUES['REDIS_PORT'], db=int(ENV_VALUES.get('REDIS_DB') or 0),
@@ -38,11 +38,11 @@ if jh.is_algorithex_project():
 
 
 def sync_publish(event: str, msg, compression: bool = False):
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         raise EnvironmentError('sync_publish() should be NOT called during testing. There must be something wrong')
 
     if compression:
-        msg = jh.gzip_compress(msg)
+        msg = ah.gzip_compress(msg)
         # Encode the compressed message using Base64
         msg = base64.b64encode(msg).decode('utf-8')
 
@@ -50,29 +50,29 @@ def sync_publish(event: str, msg, compression: bool = False):
         sync_redis.publish(
             f"{ENV_VALUES['APP_PORT']}:channel:1", json.dumps({
                 'id': os.getpid(),
-                'event': f'{jh.app_mode()}.{event}',
+                'event': f'{ah.app_mode()}.{event}',
                 'is_compressed': compression,
                 'data': msg
             }, ignore_nan=True, cls=NpEncoder)
         )
     except Exception as e:
         # Log publish errors so we can diagnose Redis outages without crashing the worker
-        jh.terminal_debug(f"Redis publish error: {e}")
+        ah.terminal_debug(f"Redis publish error: {e}")
 
 
 async def async_publish(event: str, msg, compression: bool = False):
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         raise EnvironmentError('sync_publish() should be NOT called during testing. There must be something wrong')
 
     if compression:
-        msg = jh.gzip_compress(msg)
+        msg = ah.gzip_compress(msg)
         # Encode the compressed message using Base64
         msg = base64.b64encode(msg).decode('utf-8')
 
     await async_redis.publish(
         f"{ENV_VALUES['APP_PORT']}:channel:1", json.dumps({
             'id': os.getpid(),
-            'event': f'{jh.app_mode()}.{event}',
+            'event': f'{ah.app_mode()}.{event}',
             'is_compressed': compression,
             'data': msg
         }, ignore_nan=True, cls=NpEncoder)
@@ -98,7 +98,7 @@ def store_live_charts_snapshot(session_id: str, charts: dict) -> bool:
         )
         return True
     except Exception as e:
-        jh.terminal_debug(f'Error storing live charts snapshot in Redis: {e}')
+        ah.terminal_debug(f'Error storing live charts snapshot in Redis: {e}')
         return False
 
 
@@ -109,14 +109,14 @@ def get_live_charts_snapshot(session_id: str) -> dict:
             return {}
         return json.loads(raw)
     except Exception as e:
-        jh.terminal_debug(f'Error loading live charts snapshot from Redis: {e}')
+        ah.terminal_debug(f'Error loading live charts snapshot from Redis: {e}')
         return {}
 
 
 def is_process_active(client_id: str) -> bool:
     global _last_active_check_error_at
 
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return False
 
     try:
@@ -127,7 +127,7 @@ def is_process_active(client_id: str) -> bool:
         now = time.monotonic()
         if _last_active_check_error_at == 0 or now - _last_active_check_error_at >= 30:
             try:
-                jh.terminal_debug(
+                ah.terminal_debug(
                     f'Redis active-process check failed for {client_id}; keeping the worker active: {type(e).__name__}: {e}'
                 )
             except Exception:

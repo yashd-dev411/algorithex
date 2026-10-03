@@ -13,7 +13,7 @@ from algorithex.services.web import (
     UpdateSignificanceTestSessionNotesRequestJson,
     GetSignificanceTestSessionsRequestJson,
 )
-from algorithex import helpers as jh
+from algorithex import helpers as ah
 from algorithex.models.SignificanceTestSession import (
     get_significance_test_session_by_id,
     get_significance_test_sessions,
@@ -39,7 +39,7 @@ async def significance_test(
     request_json: SignificanceTestRequestJson,
 ):
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     if not request_json.routes or len(request_json.routes) == 0:
         return JSONResponse({'error': 'Exactly one trading route is required.'}, status_code=400)
@@ -47,7 +47,7 @@ async def significance_test(
     if len(request_json.routes) != 1:
         return JSONResponse({'error': 'Rule Significance Test requires exactly one trading route.'}, status_code=400)
 
-    session_id = request_json.id or jh.generate_unique_id()
+    session_id = request_json.id or ah.generate_unique_id()
 
     existing = get_significance_test_session_by_id(session_id)
     if existing and existing.status != 'draft':
@@ -155,7 +155,7 @@ def get_session(session_id: UUID):
         return JSONResponse({'error': f'Session {session_id} not found'}, status_code=404)
 
     transformed = get_significance_test_session_for_load_more(session)
-    transformed = jh.clean_infinite_values(transformed)
+    transformed = ah.clean_infinite_values(transformed)
     return JSONResponse({'session': transformed})
 
 

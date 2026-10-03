@@ -2,7 +2,7 @@ import os
 import peewee
 import json
 from algorithex.services.db import database
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 _BACKTEST_CHART_NAMES = ['equity_curve', 'cumulative_returns', 'drawdown', 'underwater', 'monthly_heatmap', 'monthly_distribution', 'trade_pnl']
 
@@ -164,7 +164,7 @@ class BacktestSession(peewee.Model):
         if isinstance(s, dict) and 'form' in s and isinstance(s['form'], dict):
             for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
                 if key in s['form']:
-                    s['form'][key] = jh.normalize_bool(s['form'].get(key))
+                    s['form'][key] = ah.normalize_bool(s['form'].get(key))
         return s
     
     @state_json.setter
@@ -197,7 +197,7 @@ class BacktestSession(peewee.Model):
         """
         if not self.updated_at:
             # For running sessions, calculate duration up to now
-            return jh.now_to_timestamp(True) - self.created_at
+            return ah.now_to_timestamp(True) - self.created_at
         
         # For completed sessions, use the stored timestamps
         return self.updated_at - self.created_at
@@ -248,7 +248,7 @@ def store_backtest_session(
             'exception': None,
             'traceback': None,
             'execution_duration': None,
-            'updated_at': jh.now_to_timestamp(True)
+            'updated_at': ah.now_to_timestamp(True)
         }
         BacktestSession.update(**d).where(BacktestSession.id == id).execute()
     else:
@@ -256,8 +256,8 @@ def store_backtest_session(
         d = {
             'id': id,
             'status': status,
-            'created_at': jh.now_to_timestamp(True),
-            'updated_at': jh.now_to_timestamp(True)
+            'created_at': ah.now_to_timestamp(True),
+            'updated_at': ah.now_to_timestamp(True)
         }
         BacktestSession.insert(**d).execute()
     
@@ -265,7 +265,7 @@ def store_backtest_session(
 def update_backtest_session_status(id: str, status: str) -> None:
     d = {
         'status': status,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     BacktestSession.update(**d).where(BacktestSession.id == id).execute()
@@ -275,7 +275,7 @@ def store_backtest_session_exception(id: str, exception: str, traceback: str) ->
     d = {
         'exception': exception,
         'traceback': traceback,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
 
     BacktestSession.update(**d).where(BacktestSession.id == id).execute()
@@ -292,7 +292,7 @@ def update_backtest_session_results(
     strategy_codes: dict = None
 ) -> None:
     d = {
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
 
     if metrics is not None:
@@ -336,7 +336,7 @@ def get_backtest_sessions(limit: int = 50, offset: int = 0, title_search: str = 
     
     # Apply date filter
     if date_filter and date_filter != 'all_time':
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
         
         if date_filter == '7_days':
             threshold = current_timestamp - (7 * 24 * 60 * 60 * 1000)
@@ -365,7 +365,7 @@ def delete_backtest_session(id: str) -> bool:
 
 def purge_backtest_sessions(days_old: int = None) -> int:
     try:
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
         
         if days_old is not None:
             days_old = int(days_old)
@@ -411,14 +411,14 @@ def update_backtest_session_state(id: str, state: dict) -> None:
     if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
         for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
             if key in state['form']:
-                state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                state['form'][key] = ah.normalize_bool(state['form'].get(key))
     existing = BacktestSession.select().where(BacktestSession.id == id).first()
     
     if existing:
         # Update existing session's state
         d = {
             'state': json.dumps(state),
-            'updated_at': jh.now_to_timestamp(True)
+            'updated_at': ah.now_to_timestamp(True)
         }
         BacktestSession.update(**d).where(BacktestSession.id == id).execute()
     else:
@@ -427,15 +427,15 @@ def update_backtest_session_state(id: str, state: dict) -> None:
             'id': id,
             'status': 'draft',
             'state': json.dumps(state),
-            'created_at': jh.now_to_timestamp(True),
-            'updated_at': jh.now_to_timestamp(True)
+            'created_at': ah.now_to_timestamp(True),
+            'updated_at': ah.now_to_timestamp(True)
         }
         BacktestSession.insert(**d).execute()
 
 
 def update_backtest_session_notes(id: str, title: str = None, description: str = None, strategy_codes: dict = None) -> None:
     d = {
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     if title is not None:

@@ -6,7 +6,7 @@ from starlette.websockets import WebSocket
 
 from algorithex.services.redis import async_redis
 from algorithex.services.multiprocessing import process_manager
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 class ConnectionManager:
@@ -38,7 +38,7 @@ class ConnectionManager:
                 await connection.send_json(message_copy)
             except Exception as e:
                 # Drop the failing connection and continue broadcasting
-                jh.terminal_debug(f"WebSocket send error: {str(e)}")
+                ah.terminal_debug(f"WebSocket send error: {str(e)}")
                 self.disconnect(connection)
             
     async def start_redis_listener(self, channel_pattern):
@@ -64,7 +64,7 @@ class ConnectionManager:
                 # Task was cancelled as part of shutdown
                 break
             except Exception as e:
-                jh.terminal_debug(f"Redis listener error: {str(e)}")
+                ah.terminal_debug(f"Redis listener error: {str(e)}")
                 # Exponential backoff to avoid tight retry loops
                 await asyncio.sleep(backoff_seconds)
                 backoff_seconds = min(backoff_seconds * 2, 5.0)
@@ -87,7 +87,7 @@ class ConnectionManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                jh.terminal_debug(f"Heartbeat error: {str(e)}")
+                ah.terminal_debug(f"Heartbeat error: {str(e)}")
                 await asyncio.sleep(self.heartbeat_interval)
     
     async def stop_redis_listener(self):
@@ -112,8 +112,8 @@ class ConnectionManager:
             try:
                 await async_redis.punsubscribe(f"{ENV_VALUES['APP_PORT']}:channel:*")
             except Exception as e:
-                jh.terminal_debug(f"Redis punsubscribe error: {str(e)}")
-            jh.terminal_debug("Redis unsubscribed - no more active connections")
+                ah.terminal_debug(f"Redis punsubscribe error: {str(e)}")
+            ah.terminal_debug("Redis unsubscribed - no more active connections")
 
 
 # Create a global instance

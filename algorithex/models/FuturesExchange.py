@@ -1,7 +1,7 @@
 import numpy as np
 from algorithex import _native as jr
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.services.logger as logger
 from algorithex.enums import sides
 from algorithex.exceptions import InsufficientMargin
@@ -35,21 +35,21 @@ class FuturesExchange(Exchange):
 
     @property
     def started_balance(self) -> float:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return self._started_balance
 
-        return self.starting_assets[jh.app_currency()]
+        return self.starting_assets[ah.app_currency()]
 
     @property
     def wallet_balance(self) -> float:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return self._wallet_balance
 
         return self.assets[self.settlement_currency]
 
     @property
     def available_margin(self) -> float:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return self._available_margin
 
         # In both live trading and backtesting/paper trading, we start with the balance
@@ -83,7 +83,7 @@ class FuturesExchange(Exchange):
         return margin
 
     def charge_fee(self, amount: float) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
         fee_amount = abs(amount) * self.fee_rate
@@ -95,7 +95,7 @@ class FuturesExchange(Exchange):
         self.assets[self.settlement_currency] = new_balance
 
     def add_realized_pnl(self, realized_pnl: float) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
         new_balance = self.assets[self.settlement_currency] + realized_pnl
@@ -104,10 +104,10 @@ class FuturesExchange(Exchange):
         self.assets[self.settlement_currency] = new_balance
 
     def on_order_submission(self, order: Order) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
-        base_asset = jh.base_asset(order.symbol)
+        base_asset = ah.base_asset(order.symbol)
 
         # make sure we don't spend more than we're allowed considering current allowed leverage
         if not order.reduce_only:
@@ -128,10 +128,10 @@ class FuturesExchange(Exchange):
                 self.sell_orders[base_asset].append(np.array([order.qty, order.price]))
 
     def on_order_execution(self, order: Order) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
-        base_asset = jh.base_asset(order.symbol)
+        base_asset = ah.base_asset(order.symbol)
 
         if not order.reduce_only:
             order_array = np.array([order.qty, order.price])
@@ -147,10 +147,10 @@ class FuturesExchange(Exchange):
                     self.sell_orders[base_asset].delete(index, axis=0)
 
     def on_order_cancellation(self, order: Order) -> None:
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return
 
-        base_asset = jh.base_asset(order.symbol)
+        base_asset = ah.base_asset(order.symbol)
 
         self.available_assets[base_asset] -= order.qty
         if not order.reduce_only:
@@ -168,7 +168,7 @@ class FuturesExchange(Exchange):
         """
         Used for updating the exchange from the WS stream (only for live trading)
         """
-        if not jh.is_livetrading():
+        if not ah.is_livetrading():
             raise Exception('This method is only for live trading')
         self._available_margin = data['available_margin']
         self._wallet_balance = data['wallet_balance']

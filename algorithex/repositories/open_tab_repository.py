@@ -1,5 +1,5 @@
 from typing import List
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models.OpenTab import OpenTab
 from algorithex.services.db import database
 import peewee
@@ -23,7 +23,7 @@ def get_open_tabs(module: str) -> List[OpenTab]:
     """
     Get all open tabs for a module, ordered by order_index
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
     
     _ensure_db_open()
@@ -47,7 +47,7 @@ def add_open_tab(module: str, session_id: str) -> List[str]:
     Add a new tab (or update if exists). Returns ordered list of session IDs.
     For singleton modules (optimization, monte_carlo), ensures only 1 tab exists.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
     
     _ensure_db_open()
@@ -75,9 +75,9 @@ def add_open_tab(module: str, session_id: str) -> List[str]:
         order_index = (max_order + 1) if max_order is not None else 0
     
     # Create new tab
-    now = jh.now_to_timestamp(True)
+    now = ah.now_to_timestamp(True)
     OpenTab.create(
-        id=jh.generate_unique_id(),
+        id=ah.generate_unique_id(),
         module=module,
         session_id=session_id,
         order_index=order_index,
@@ -92,7 +92,7 @@ def remove_open_tab(module: str, session_id: str) -> List[str]:
     """
     Remove a tab and reorder remaining tabs. Returns ordered list of session IDs.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
     
     _ensure_db_open()
@@ -107,7 +107,7 @@ def remove_open_tab(module: str, session_id: str) -> List[str]:
     for idx, tab in enumerate(tabs):
         if tab.order_index != idx:
             tab.order_index = idx
-            tab.updated_at = jh.now_to_timestamp(True)
+            tab.updated_at = ah.now_to_timestamp(True)
             tab.save()
     
     return get_open_tab_session_ids(module)
@@ -119,7 +119,7 @@ def reorder_open_tabs(module: str, session_ids: List[str]) -> List[str]:
     For singleton modules, ensures only 1 tab exists.
     Returns ordered list of session IDs.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
     
     _ensure_db_open()
@@ -138,7 +138,7 @@ def reorder_open_tabs(module: str, session_ids: List[str]) -> List[str]:
         else:
             OpenTab.delete().where(OpenTab.module == module).execute()
     
-    now = jh.now_to_timestamp(True)
+    now = ah.now_to_timestamp(True)
     
     # Update order_index for each tab
     for idx, session_id in enumerate(session_ids):
@@ -153,7 +153,7 @@ def reorder_open_tabs(module: str, session_ids: List[str]) -> List[str]:
         else:
             # Create if doesn't exist
             OpenTab.create(
-                id=jh.generate_unique_id(),
+                id=ah.generate_unique_id(),
                 module=module,
                 session_id=session_id,
                 order_index=idx,
@@ -173,7 +173,7 @@ def clear_open_tabs(module: str) -> None:
     """
     Remove all open tabs for a module
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
     
     _ensure_db_open()

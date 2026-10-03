@@ -19,7 +19,7 @@ import sys
 import os
 import signal
 import click
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 # Global variable to store the MCP process handle
@@ -55,7 +55,7 @@ def run_mcp_server(algorithex_host:str, algorithex_port:int) -> None:
     
     # Check if the MCP server is already running
     if MCP_PROCESS and MCP_PROCESS.poll() is None:
-        print(jh.color("MCP Server is already running", "yellow"))
+        print(ah.color("MCP Server is already running", "yellow"))
         return
     
     # Update the MCP config
@@ -145,18 +145,18 @@ def terminate_mcp_server():
     global MCP_PROCESS
     if MCP_PROCESS:
         try:
-            print(jh.color("Stopping MCP Server...", 'yellow'))
+            print(ah.color("Stopping MCP Server...", 'yellow'))
             MCP_PROCESS.terminate()
             MCP_PROCESS.wait(timeout=5)
-            print(jh.color("✓ MCP Server stopped", 'green'))
+            print(ah.color("✓ MCP Server stopped", 'green'))
         except Exception as e:
-            print(jh.color(f"⚠ Error stopping MCP: {str(e)}", 'yellow'))
+            print(ah.color(f"⚠ Error stopping MCP: {str(e)}", 'yellow'))
             try:
-                print(jh.color("Force killing MCP Server...", 'yellow'))
+                print(ah.color("Force killing MCP Server...", 'yellow'))
                 MCP_PROCESS.kill()  # Force kill if terminate fails
             except Exception as e:
-                print(jh.color(f"⚠ Error force killing MCP: {str(e)}", 'yellow'))
+                print(ah.color(f"⚠ Error force killing MCP: {str(e)}", 'yellow'))
                 pass
         finally:
             MCP_PROCESS = None
-            print(jh.color("✓ MCP Server terminated", 'green'))
+            print(ah.color("✓ MCP Server terminated", 'green'))

@@ -14,7 +14,7 @@ from algorithex.services.web import (
     UpdateMonteCarloSessionNotesRequestJson,
     GetMonteCarloSessionsRequestJson
 )
-from algorithex import helpers as jh
+from algorithex import helpers as ah
 from algorithex.models.MonteCarloSession import (
     get_monte_carlo_sessions,
     update_monte_carlo_session_state,
@@ -39,7 +39,7 @@ async def monte_carlo(request: Request, request_json: MonteCarloRequestJson):
     Start a Monte Carlo simulation
     """
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     # Validate at least one type is selected
     if not request_json.run_trades and not request_json.run_candles:
@@ -56,7 +56,7 @@ async def monte_carlo(request: Request, request_json: MonteCarloRequestJson):
         }, status_code=400)
 
     # Generate unique session ID if not provided
-    session_id = request_json.id or jh.generate_unique_id()    
+    session_id = request_json.id or ah.generate_unique_id()    
 
     # Check if session already exists
     existing_session = get_monte_carlo_session_by_id(session_id)
@@ -135,7 +135,7 @@ async def resume_monte_carlo(request_json: MonteCarloRequestJson):
     Resume a Monte Carlo simulation
     """
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     # Get the session from the database
     session = get_monte_carlo_session_by_id(request_json.id)
@@ -225,7 +225,7 @@ def get_monte_carlo_session_by_id_endpoint(session_id: UUID):
     # Transform the session using the transformer
     transformed_session = get_monte_carlo_session_for_load_more(session)
     # Ensure JSON-safe values (replace NaN/Inf with None)
-    transformed_session = jh.clean_infinite_values(transformed_session)
+    transformed_session = ah.clean_infinite_values(transformed_session)
 
     return JSONResponse({
         'session': transformed_session
@@ -250,7 +250,7 @@ def get_monte_carlo_equity_curves(session_id: UUID):
     
     # Extract trades equity curves
     if session.trades_session and session.trades_session.results:
-        results = jh.clean_infinite_values(session.trades_session.results_json)
+        results = ah.clean_infinite_values(session.trades_session.results_json)
         
         # Extract original equity curve
         original_curve = None
@@ -277,7 +277,7 @@ def get_monte_carlo_equity_curves(session_id: UUID):
     
     # Extract candles equity curves
     if session.candles_session and session.candles_session.results:
-        results = jh.clean_infinite_values(session.candles_session.results_json)
+        results = ah.clean_infinite_values(session.candles_session.results_json)
         
         # Extract original equity curve
         original_curve = None

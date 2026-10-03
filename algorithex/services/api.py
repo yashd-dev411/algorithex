@@ -1,7 +1,7 @@
 import threading
 from typing import Union
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models.Order import Order
 from algorithex.services import logger
 
@@ -10,11 +10,11 @@ class API:
     def __init__(self) -> None:
         self.drivers = {}
 
-        if not jh.is_live():
+        if not ah.is_live():
             self.initiate_drivers()
 
     def initiate_drivers(self) -> None:
-        considering_exchanges = jh.get_config('app.considering_exchanges')
+        considering_exchanges = ah.get_config('app.considering_exchanges')
 
         # Driver construction requires the active route set.
         if not len(considering_exchanges):
@@ -32,9 +32,9 @@ class API:
         if exchange_name in self.drivers:
             return
 
-        if jh.is_live():
+        if ah.is_live():
             def initiate_ws(name: str) -> None:
-                exchange_class = jh.get_config(f'app.live_drivers.{name}')
+                exchange_class = ah.get_config(f'app.live_drivers.{name}')
                 self.drivers[name] = exchange_class()
 
             threading.Thread(target=initiate_ws, args=[exchange_name]).start()

@@ -1,6 +1,6 @@
 import numpy as np
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import research
 from algorithex.config import reset_config
 from algorithex.factories import candles_from_close_prices
@@ -40,7 +40,7 @@ class _CandleRecorderStrategy(Strategy):
 def _candles_seen(fast_mode: bool) -> list:
     # isolate from whatever ran before in the suite: reset config + clear lru_cached mode helpers
     reset_config()
-    for fn in (jh.app_mode, jh.is_live, jh.is_livetrading, jh.is_optimizing, jh.is_paper_trading):
+    for fn in (ah.app_mode, ah.is_live, ah.is_livetrading, ah.is_optimizing, ah.is_paper_trading):
         fn.cache_clear()
 
     # ~3000 1m candles on a 5m timeframe => the simulator must build 5m candles from the
@@ -54,7 +54,7 @@ def _candles_seen(fast_mode: bool) -> list:
         'exchange': exchange, 'warm_up_candles': 0,
     }
     routes = [{'exchange': exchange, 'strategy': _CandleRecorderStrategy, 'symbol': symbol, 'timeframe': timeframe}]
-    candles = {jh.key(exchange, symbol): {'exchange': exchange, 'symbol': symbol, 'candles': fake}}
+    candles = {ah.key(exchange, symbol): {'exchange': exchange, 'symbol': symbol, 'candles': fake}}
 
     _RECORDED.clear()
     research.backtest(

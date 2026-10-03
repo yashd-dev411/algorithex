@@ -1,6 +1,6 @@
 from typing import Union
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.enums import sides
 from algorithex.exceptions import OrderNotAllowed, InvalidStrategy
 from algorithex.models.Order import Order
@@ -16,7 +16,7 @@ class Broker:
         from algorithex.services.api import api
         # Non-live sessions may use arbitrary research exchange names, so each
         # route must have a matching sandbox driver before it submits orders.
-        if not jh.is_live():
+        if not ah.is_live():
             api.initiate_driver(exchange)
         self.api = api
 
@@ -94,11 +94,11 @@ class Broker:
                 'Cannot submit a reduce_position order when there is no open position'
             )
 
-        side = jh.opposite_side(jh.type_to_side(self.position.type))
+        side = ah.opposite_side(ah.type_to_side(self.position.type))
 
         # MARKET order
         # if the price difference is bellow 0.01% of the current price, then we submit a market order
-        if jh.is_price_near(price, current_price):
+        if ah.is_price_near(price, current_price):
             return self.api.market_order(
                 self.exchange,
                 self.symbol,

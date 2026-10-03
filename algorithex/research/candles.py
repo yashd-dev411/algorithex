@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union, Tuple
 from algorithex import factories
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.candle_service import get_candles_from_db as _get_candles
 
 
@@ -15,7 +15,7 @@ def get_candles(
         caching: bool = False,
         is_for_algorithex: bool = False
 ) -> Tuple[np.ndarray, np.ndarray]:
-    if not jh.is_algorithex_project():
+    if not ah.is_algorithex_project():
         raise FileNotFoundError(
             'Invalid directory: ".env" file not found. To use Algorithex inside notebooks, create notebooks inside the root of a Algorithex project.'
         )
@@ -29,10 +29,10 @@ def store_candles(candles: np.ndarray, exchange: str, symbol: str) -> None:
     A common use case for this function is for importing candles from a CSV file so you can later use them for backtesting.
     """
     from algorithex.modes.import_candles_mode import store_candles_list as store_candles_from_list
-    import algorithex.helpers as jh
+    import algorithex.helpers as ah
 
     # check if .env file exists
-    if not jh.is_unit_testing() and not jh.is_algorithex_project():
+    if not ah.is_unit_testing() and not ah.is_algorithex_project():
         raise FileNotFoundError(
             'Invalid directory: ".env" file not found. To use Algorithex inside notebooks, create notebooks inside the root of a Algorithex project.'
         )
@@ -50,7 +50,7 @@ def store_candles(candles: np.ndarray, exchange: str, symbol: str) -> None:
         )
 
     arr = [{
-        'id': jh.generate_unique_id(),
+        'id': ah.generate_unique_id(),
         'exchange': exchange,
         'symbol': symbol,
         'timeframe': '1m',
@@ -62,7 +62,7 @@ def store_candles(candles: np.ndarray, exchange: str, symbol: str) -> None:
         'volume': c[5]
     } for c in candles]
 
-    if not jh.is_unit_testing():
+    if not ah.is_unit_testing():
         store_candles_from_list(arr)
 
 

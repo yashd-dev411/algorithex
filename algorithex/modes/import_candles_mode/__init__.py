@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Union
 import arrow
 import pydash
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.exceptions import CandleNotFoundInExchange
 from algorithex.enums import live_session_modes
 from algorithex.models.Candle import Candle
@@ -87,7 +87,7 @@ def validate_import_request(exchange: str, symbol: str, start_date_str: str) -> 
         )
 
     try:
-        start_timestamp = jh.arrow_to_timestamp(arrow.get(start_date_str, 'YYYY-MM-DD'))
+        start_timestamp = ah.arrow_to_timestamp(arrow.get(start_date_str, 'YYYY-MM-DD'))
     except Exception:
         raise ValueError(
             'start_date must be a string representing a date before today. '
@@ -102,7 +102,7 @@ def validate_import_request(exchange: str, symbol: str, start_date_str: str) -> 
 
     # quote_asset() enforces Algorithex's BASE-QUOTE symbol contract.
     try:
-        jh.quote_asset(symbol)
+        ah.quote_asset(symbol)
     except exceptions.InvalidRoutes as e:
         raise ValueError(str(e)) from None
     return start_timestamp, symbol.upper()
@@ -193,7 +193,7 @@ def _report_import_progress(
 ) -> None:
     """Publish range-based progress because candle counts do not measure sparse coverage."""
     percent = round(min(max(completed_span / total_span * 100, 0), 100), 1)
-    reached_date = jh.timestamp_to_date(reached_timestamp)
+    reached_date = ah.timestamp_to_date(reached_timestamp)
     _store_import_progress(client_id, percent, remaining_seconds, reached_date)
     if running_via_dashboard:
         sync_publish('progressbar', {
@@ -201,7 +201,7 @@ def _report_import_progress(
             'estimated_remaining_seconds': remaining_seconds,
         })
     if show_progressbar:
-        jh.clear_output()
+        ah.clear_output()
         _print_import_progressbar(exchange, symbol, percent, remaining_seconds, reached_date)
 
 
@@ -478,9 +478,9 @@ def _run(
         )
     actual_start_timestamp = max(start_timestamp, observed_first_timestamp)
     actual_end_timestamp = min(end_timestamp - interval, observed_latest_timestamp)
-    requested_start_date = jh.timestamp_to_date(start_timestamp)
-    actual_start_date = jh.timestamp_to_date(actual_start_timestamp)
-    actual_end_date = jh.timestamp_to_date(actual_end_timestamp)
+    requested_start_date = ah.timestamp_to_date(start_timestamp)
+    actual_start_date = ah.timestamp_to_date(actual_start_timestamp)
+    actual_end_date = ah.timestamp_to_date(actual_end_timestamp)
     success_text = (
         f'Successfully processed {processed_candles} observed candles since '
         f'"{actual_start_date}" through "{actual_end_date}". '
@@ -543,7 +543,7 @@ def _get_candles_from_backup_exchange(exchange: str, backup_driver: CandleExchan
         # loop through them and set new ID and exchange
         for c in backup_candles:
             total_candles.append({
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': exchange,
                 'symbol': symbol,
                 'timeframe': timeframe,
@@ -558,19 +558,19 @@ def _get_candles_from_backup_exchange(exchange: str, backup_driver: CandleExchan
         return total_candles
 
     # try fetching from market now
-    days_count = jh.date_diff_in_days(jh.timestamp_to_arrow(start_timestamp), jh.timestamp_to_arrow(end_timestamp))
+    days_count = ah.date_diff_in_days(ah.timestamp_to_arrow(start_timestamp), ah.timestamp_to_arrow(end_timestamp))
     # make sure it's rounded up so that we import maybe more candles, but not less
     days_count = max(days_count, 1)
     if type(days_count) is float and not days_count.is_integer():
         days_count = math.ceil(days_count)
     candles_count = days_count * 1440
-    start_date = jh.timestamp_to_arrow(start_timestamp).floor('day')
+    start_date = ah.timestamp_to_arrow(start_timestamp).floor('day')
     for _ in range(candles_count):
         temp_start_timestamp = start_date.int_timestamp * 1000
         temp_end_timestamp = temp_start_timestamp + (backup_driver.count - 1) * 60000
 
         # to make sure it won't try to import candles from the future! LOL
-        if temp_start_timestamp > jh.now_to_timestamp():
+        if temp_start_timestamp > ah.now_to_timestamp():
             break
 
         # prevent duplicates
@@ -584,7 +584,7 @@ def _get_candles_from_backup_exchange(exchange: str, backup_driver: CandleExchan
 
         if not already_exists:
             # it's today's candles if temp_end_timestamp < now
-            if temp_end_timestamp > jh.now_to_timestamp():
+            if temp_end_timestamp > ah.now_to_timestamp():
                 temp_end_timestamp = arrow.utcnow().floor('minute').int_timestamp * 1000 - 60000
 
             # fetch from market
@@ -594,7 +594,7 @@ def _get_candles_from_backup_exchange(exchange: str, backup_driver: CandleExchan
 
             if not len(candles):
                 raise CandleNotFoundInExchange(
-                    f'No candles exists in the market for this day: {jh.timestamp_to_time(temp_start_timestamp)[:10]} \n'
+                    f'No candles exists in the market for this day: {ah.timestamp_to_time(temp_start_timestamp)[:10]} \n'
                     'Try another start_date'
                 )
 
@@ -628,7 +628,7 @@ def _get_candles_from_backup_exchange(exchange: str, backup_driver: CandleExchan
         # loop through them and set new ID and exchange
         for c in backup_candles:
             total_candles.append({
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': exchange,
                 'symbol': symbol,
                 'timeframe': timeframe,
@@ -647,7 +647,7 @@ def _fill_absent_candles(temp_candles: List[Dict[str, Union[str, Any]]], start_t
         List[Dict[str, Union[str, Any]]]:
     if not temp_candles:
         raise CandleNotFoundInExchange(
-            f'No candles exists in the market for this day: {jh.timestamp_to_time(start_timestamp)[:10]} \n'
+            f'No candles exists in the market for this day: {ah.timestamp_to_time(start_timestamp)[:10]} \n'
             'Try another start_date'
         )
 
@@ -675,7 +675,7 @@ def _fill_absent_candles(temp_candles: List[Dict[str, Union[str, Any]]], start_t
             if started:
                 last_close = candles[-1]['close']
                 candles.append({
-                    'id': jh.generate_unique_id(),
+                    'id': ah.generate_unique_id(),
                     'exchange': exchange,
                     'symbol': symbol,
                     'timeframe': '1m',
@@ -688,7 +688,7 @@ def _fill_absent_candles(temp_candles: List[Dict[str, Union[str, Any]]], start_t
                 })
             else:
                 candles.append({
-                    'id': jh.generate_unique_id(),
+                    'id': ah.generate_unique_id(),
                     'exchange': exchange,
                     'symbol': symbol,
                     'timeframe': '1m',
@@ -716,7 +716,7 @@ def _fetch_normalized_candles(
     timeframe: str,
 ) -> List[Dict[str, Union[str, Any]]]:
     """Fetch an inclusive storage range through the provider's half-open normalized contract."""
-    interval = jh.timeframe_to_one_minutes(timeframe) * 60_000
+    interval = ah.timeframe_to_one_minutes(timeframe) * 60_000
     request = HistoricalCandleRequest(
         symbol=symbol,
         timeframe=timeframe,
@@ -725,7 +725,7 @@ def _fetch_normalized_candles(
     batch = provider.fetch_candles(request)
     return [
         {
-            'id': jh.generate_unique_id(),
+            'id': ah.generate_unique_id(),
             'exchange': provider.name,
             'symbol': symbol,
             'timeframe': timeframe,

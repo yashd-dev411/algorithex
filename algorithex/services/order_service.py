@@ -1,5 +1,5 @@
 from typing import List
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.services.logger as logger
 from algorithex.config import config
 from algorithex.services.notifier import notify
@@ -14,19 +14,19 @@ from algorithex.services import position_service
 
 def create_order(attributes: dict, should_silent: bool = False, should_store: bool = True) -> Order:
     if attributes.get('created_at') is None:
-        attributes['created_at'] = jh.now_to_timestamp()
+        attributes['created_at'] = ah.now_to_timestamp()
     
     order = Order(attributes)
     
     # if for example we are in a live trade mode:
     if not should_silent:
-        if jh.is_live():
+        if ah.is_live():
             _notify_submission(order)
         
-        if jh.is_debuggable('order_submission') and (order.is_active or order.is_queued):
+        if ah.is_debuggable('order_submission') and (order.is_active or order.is_queued):
             txt: str = f'{"QUEUED" if order.is_queued else "SUBMITTED"} order: {order.symbol}, {order.type}, {order.side}, {order.qty}'
             if order.price:
-                txt += f', ${jh.format_price(order.price)}'
+                txt += f', ${ah.format_price(order.price)}'
             logger.info(txt)
     
     # If it's an order to close pre-existing positions, we don't want to include it in calculations.
@@ -37,11 +37,11 @@ def create_order(attributes: dict, should_silent: bool = False, should_store: bo
         store.orders.add_order(order)
 
         # if it's paper trading or backtesting (basicly not live trading), we add the order to the to_execute list to later simulate the execution.
-        if not jh.is_livetrading() and order.type == order_types.MARKET:
+        if not ah.is_livetrading() and order.type == order_types.MARKET:
             store.orders.to_execute.append(order)
         
         # if it's live/paper trading, we store the order in the database.
-        if jh.is_live():
+        if ah.is_live():
             order_repository.store_or_update(order)
     
     return order
@@ -51,12 +51,12 @@ def execute_order(order: Order, silent: bool = False) -> None:
     if order.is_canceled or order.is_executed:
         return
     
-    order.executed_at = jh.now_to_timestamp()
+    order.executed_at = ah.now_to_timestamp()
     order.status = order_statuses.EXECUTED
     order.fee = order.fee or None
 
     # if it's not live trading, we set the filled qty to the qty.
-    if not jh.is_livetrading():
+    if not ah.is_livetrading():
         # a reduce_only order can only fill up to the size of the open position. If its
         # stated qty exceeds the remaining position (e.g. a stop-loss left oversized after
         # partial take-profits), the actual fill is capped to what closes the position.
@@ -71,20 +71,20 @@ def execute_order(order: Order, silent: bool = False) -> None:
             order.filled_qty = order.qty
     
     # set order fee for non-live modes if not already set. In live trading, the fee is fetched by the exchange.
-    if not jh.is_livetrading() and order.fee is None:
-        fee_rate = jh.get_config(f'env.exchanges.{order.exchange}.fee')
+    if not ah.is_livetrading() and order.fee is None:
+        fee_rate = ah.get_config(f'env.exchanges.{order.exchange}.fee')
         notional = abs(order.filled_qty or order.qty) * order.price
         order.fee = fee_rate * notional
 
     if not silent:
         txt = f'EXECUTED order: {order.symbol}, {order.type}, {order.side}, {order.qty}'
         if order.price:
-            txt += f', ${jh.format_price(order.price)}'
+            txt += f', ${ah.format_price(order.price)}'
         
-        if jh.is_debuggable('order_execution'):
+        if ah.is_debuggable('order_execution'):
             logger.info(txt)
         
-        if jh.is_live():
+        if ah.is_live():
             if config['env']['notifications']['events']['executed_orders']:
                 notify(txt)
     
@@ -99,22 +99,22 @@ def execute_order(order: Order, silent: bool = False) -> None:
 
 
 def execute_order_partially(order: Order, silent: bool = False) -> None:
-    order.executed_at = jh.now_to_timestamp()
+    order.executed_at = ah.now_to_timestamp()
     order.status = order_statuses.PARTIALLY_FILLED
     
     # set order fee for non-live modes if not already set. In live trading, the fee is fetched by the exchange.
-    if not jh.is_livetrading() and order.fee is None:
-        fee_rate = jh.get_config(f'env.exchanges.{order.exchange}.fee')
+    if not ah.is_livetrading() and order.fee is None:
+        fee_rate = ah.get_config(f'env.exchanges.{order.exchange}.fee')
         notional = abs(order.filled_qty or order.qty) * order.price
         order.fee = fee_rate * notional
     
     if not silent:
-        txt = f"PARTIALLY FILLED: {order.symbol}, {order.type}, {order.side}, filled qty: {order.filled_qty}, remaining qty: {order.remaining_qty}, price: {jh.format_price(order.price)}"
+        txt = f"PARTIALLY FILLED: {order.symbol}, {order.type}, {order.side}, filled qty: {order.filled_qty}, remaining qty: {order.remaining_qty}, price: {ah.format_price(order.price)}"
         
-        if jh.is_debuggable('order_execution'):
+        if ah.is_debuggable('order_execution'):
             logger.info(txt)
         
-        if jh.is_live():
+        if ah.is_live():
             if config['env']['notifications']['events']['executed_orders']:
                 notify(txt)
     
@@ -143,16 +143,16 @@ def cancel_order(order: Order, silent: bool = False, source: str = '') -> None:
     if source == 'stream' and order.is_queued:
         return
     
-    order.canceled_at = jh.now_to_timestamp()
+    order.canceled_at = ah.now_to_timestamp()
     order.status = order_statuses.CANCELED
     
     if not silent:
         txt = f'CANCELED order: {order.symbol}, {order.type}, {order.side}, {order.qty}'
         if order.price:
-            txt += f', ${jh.format_price(order.price)}'
-        if jh.is_debuggable('order_cancellation'):
+            txt += f', ${ah.format_price(order.price)}'
+        if ah.is_debuggable('order_cancellation'):
             logger.info(txt)
-        if jh.is_live():
+        if ah.is_live():
             if config['env']['notifications']['events']['cancelled_orders']:
                 notify(txt)
     
@@ -163,10 +163,10 @@ def cancel_order(order: Order, silent: bool = False, source: str = '') -> None:
 def queue_order(order: Order) -> None:
     order.status = order_statuses.QUEUED
     order.canceled_at = None
-    if jh.is_debuggable('order_submission'):
+    if ah.is_debuggable('order_submission'):
         txt = f'QUEUED order: {order.symbol}, {order.type}, {order.side}, {order.qty}'
         if order.price:
-            txt += f', ${jh.format_price(order.price)}'
+            txt += f', ${ah.format_price(order.price)}'
             logger.info(txt)
     _notify_submission(order)
 
@@ -175,13 +175,13 @@ def resubmit_order(order: Order) -> None:
     if not order.is_queued:
         raise Exception(f'Cannot resubmit an order that is not queued. Current status: {order.status}')
     
-    order.id = jh.generate_unique_id()
+    order.id = ah.generate_unique_id()
     order.status = order_statuses.ACTIVE
     order.canceled_at = None
-    if jh.is_debuggable('order_submission'):
+    if ah.is_debuggable('order_submission'):
         txt: str = f'SUBMITTED order: {order.symbol}, {order.type}, {order.side}, {order.qty}'
         if order.price:
-            txt += f', ${jh.format_price(order.price)}'
+            txt += f', ${ah.format_price(order.price)}'
             logger.info(txt)
     _notify_submission(order)
 
@@ -190,7 +190,7 @@ def _notify_submission(order: Order) -> None:
     if config['env']['notifications']['events']['submitted_orders'] and (order.is_active or order.is_queued):
         txt = f'{"QUEUED" if order.is_queued else "SUBMITTED"} order: {order.symbol}, {order.type}, {order.side}, {order.qty}'
         if order.price:
-            txt += f', ${jh.format_price(order.price)}'
+            txt += f', ${ah.format_price(order.price)}'
         notify(txt)
 
 
@@ -209,7 +209,7 @@ def get_entry_orders(exchange: str, symbol: str) -> List[Order]:
         return store.orders.get_orders(exchange, symbol).copy()
 
     all_orders = store.orders.get_active_orders(exchange, symbol)
-    p_side = jh.type_to_side(p.type)
+    p_side = ah.type_to_side(p.type)
     entry_orders = [o for o in all_orders if (o.side == p_side and not o.is_canceled)]
 
     return entry_orders
@@ -228,7 +228,7 @@ def get_exit_orders(exchange: str, symbol: str) -> List[Order]:
     if p.is_close:
         return []
     else:
-        exit_orders = [o for o in all_orders if o.side != jh.type_to_side(p.type)]
+        exit_orders = [o for o in all_orders if o.side != ah.type_to_side(p.type)]
 
     # exclude cancelled orders
     exit_orders = [o for o in exit_orders if not o.is_canceled]
@@ -249,7 +249,7 @@ def get_active_exit_orders(exchange: str, symbol: str) -> List[Order]:
     if p.is_close:
         return []
     else:
-        exit_orders = [o for o in all_orders if o.side != jh.type_to_side(p.type)]
+        exit_orders = [o for o in all_orders if o.side != ah.type_to_side(p.type)]
 
     # exclude cancelled orders
     exit_orders = [o for o in exit_orders if not o.is_canceled]

@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Optional
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from peewee import EXCLUDED, fn
 
 from algorithex.models.LiveChart import LiveChartPoint, LiveChartSeries
@@ -18,7 +18,7 @@ def _ensure_db_open() -> None:
 
 
 def store_points(points: list[dict]) -> None:
-    if jh.is_unit_testing() or not points:
+    if ah.is_unit_testing() or not points:
         return
 
     _ensure_db_open()
@@ -89,7 +89,7 @@ def get_chart_data(
     start_time: int,
     finish_time: int,
 ) -> Optional[dict]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     _ensure_db_open()
@@ -169,7 +169,7 @@ def get_chart_time_bounds(
     symbol: str,
     timeframe: str,
 ) -> Optional[tuple[int, int]]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     _ensure_db_open()

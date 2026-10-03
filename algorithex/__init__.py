@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from algorithex.services.web import fastapi_app
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.auth import InvalidAuthError, unauthorized_response
 
 from algorithex.services.e2e_database import reset_test_database_if_requested

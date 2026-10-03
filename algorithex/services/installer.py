@@ -1,5 +1,5 @@
 from algorithex.services.env import ENV_VALUES
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import platform
 import requests
 import subprocess
@@ -22,7 +22,7 @@ def install(is_live_plugin_already_installed: bool, strict: bool):
         print(f'Version "{__version__}" of the live-trade plugin is already installed (Algorithex local mode).')
         if strict:
             txt = '\nIf you meant to update, first delete the existing version by running "pip uninstall algorithex_live -y" and then run "algorithex install-live" one more time.'
-            print(jh.color(txt, 'yellow'))
+            print(ah.color(txt, 'yellow'))
         return
 
     print('Algorithex local mode: skipping website live-plugin download. Backtest, paper (simulated), optimize, Monte Carlo, and significance tests all run locally without a license token.')
@@ -67,7 +67,7 @@ def install(is_live_plugin_already_installed: bool, strict: bool):
             headers={'Authorization': 'Bearer ' + access_token},
             params={
                 'os': formatted_os_name,
-                'python_version': '{}.{}'.format(*jh.python_version()),
+                'python_version': '{}.{}'.format(*ah.python_version()),
                 'beta': True,
                 'algorithex_version': algorithex_version
             }
@@ -78,7 +78,7 @@ def install(is_live_plugin_already_installed: bool, strict: bool):
             headers={'Authorization': 'Bearer ' + access_token},
             params={
                 'os': formatted_os_name,
-                'python_version': '{}.{}'.format(*jh.python_version()),
+                'python_version': '{}.{}'.format(*ah.python_version()),
                 'beta': True,
                 'algorithex_version': algorithex_version
             }

@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.config import reset_config
 from algorithex.enums import timeframes, exchanges
 from algorithex.factories import range_candles
@@ -17,7 +17,7 @@ def test_backtesting_one_route():
     config['env']['exchanges'][exchanges.SANDBOX]['type'] = 'futures'
 
     candles = {}
-    key = jh.key(exchanges.SANDBOX, 'BTC-USDT')
+    key = ah.key(exchanges.SANDBOX, 'BTC-USDT')
     candles[key] = {
         'exchange': exchanges.SANDBOX,
         'symbol': 'BTC-USDT',
@@ -74,7 +74,7 @@ def test_backtesting_three_routes():
 
     candles = {}
     for r in routes:
-        key = jh.key(exchanges.SANDBOX, r['symbol'])
+        key = ah.key(exchanges.SANDBOX, r['symbol'])
         candles[key] = {
             'exchange': exchanges.SANDBOX,
             'symbol': r['symbol'],

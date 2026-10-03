@@ -5,7 +5,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.constants import TIMEFRAME_TO_ONE_MINUTES
 from algorithex.services import trading_hours as trading_hours_service
 from algorithex.enums import timeframes
@@ -56,10 +56,10 @@ def crossed(series1: np.ndarray, series2: Union[float, int, np.ndarray], directi
     """
 
     if sequential:
-        series1_shifted = jh.np_shift(series1, 1, np.nan)
+        series1_shifted = ah.np_shift(series1, 1, np.nan)
 
         if type(series2) is np.ndarray:
-            series2_shifted = jh.np_shift(series2, 1, np.nan)
+            series2_shifted = ah.np_shift(series2, 1, np.nan)
         else:
             series2_shifted = series2
 
@@ -207,7 +207,7 @@ def size_to_qty(position_size: float, entry_price: float, precision: int = 3, fe
     if fee_rate != 0:
         position_size *= 1 - fee_rate * 3
 
-    return jh.floor_with_precision(position_size / entry_price, precision)
+    return ah.floor_with_precision(position_size / entry_price, precision)
 
 
 def subtract_floats(float1: float, float2: float) -> float:
@@ -273,7 +273,7 @@ def prices_to_returns(price_series: np.ndarray) -> np.ndarray:
     converts a series of asset prices to returns.
     """
     pct = np.diff(price_series) / price_series[:-1] * 100
-    return jh.same_length(price_series, pct)
+    return ah.same_length(price_series, pct)
 
 
 def z_score(series: np.ndarray) -> np.ndarray:
@@ -304,7 +304,7 @@ def dd(msg: str) -> None:
     :param msg: str
     """
     print(msg)
-    jh.terminate_app()
+    ah.terminate_app()
 
 
 def combinations_without_repeat(a: np.ndarray, n: int = 2) -> np.ndarray:
@@ -342,7 +342,7 @@ def timeframe_to_one_minutes(timeframe: str) -> int:
     except KeyError:
         from algorithex.exceptions import InvalidTimeframe
 
-        all_timeframes = [timeframe for timeframe in jh.class_iter(timeframes)]
+        all_timeframes = [timeframe for timeframe in ah.class_iter(timeframes)]
         raise InvalidTimeframe(
             f'Timeframe "{timeframe}" is invalid. Supported timeframes are {", ".join(all_timeframes)}.'
         )

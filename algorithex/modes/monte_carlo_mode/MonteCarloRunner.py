@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 import os
 import ray
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.services.logger as logger
 from algorithex import exceptions
 from algorithex.services.redis import sync_publish, is_process_active
@@ -65,7 +65,7 @@ class MonteCarloRunner:
         available = cpu_count()
         self.cpu_cores = cpu_cores if cpu_cores <= available else available
 
-        self.start_time = jh.now_to_timestamp()
+        self.start_time = ah.now_to_timestamp()
         
         # Create progress bar for tracking
         self.progressbar = Progressbar(num_scenarios)
@@ -83,7 +83,7 @@ class MonteCarloRunner:
                 ray.init(num_cpus=1, ignore_reinit_error=True)
                 self.ray_started_here = True
 
-        self.client_id = jh.get_session_id()
+        self.client_id = ah.get_session_id()
 
         # Track session IDs
         self.trades_session_id = None
@@ -193,8 +193,8 @@ class MonteCarloRunner:
 
     def _publish_general_info(self):
         general_info = {
-            'started_at': jh.timestamp_to_arrow(self.start_time).humanize(
-                jh.timestamp_to_arrow(jh.now(force_fresh=True))
+            'started_at': ah.timestamp_to_arrow(self.start_time).humanize(
+                ah.timestamp_to_arrow(ah.now(force_fresh=True))
             ),
             'run_trades': self.run_trades,
             'run_candles': self.run_candles,
@@ -376,7 +376,7 @@ class MonteCarloRunner:
         
         # Reset progressbar for this simulation
         self.progressbar = Progressbar(self.num_scenarios)
-        self.start_time = jh.now_to_timestamp()
+        self.start_time = ah.now_to_timestamp()
         last_update_time = None
         throttle_interval = 0.5  # Only publish every 0.5 seconds
         
@@ -397,7 +397,7 @@ class MonteCarloRunner:
                 
                 if should_publish:
                     # Calculate estimated remaining time
-                    elapsed = jh.now_to_timestamp() - self.start_time
+                    elapsed = ah.now_to_timestamp() - self.start_time
                     if completed_count > 0:
                         avg_time_per_scenario = elapsed / completed_count
                         remaining_scenarios = self.num_scenarios - completed_count
@@ -445,7 +445,7 @@ class MonteCarloRunner:
         logger.log_monte_carlo("Inside _run_candles_with_progress", session_id=self.session_id)
         
         # Reset start time for this simulation
-        self.start_time = jh.now_to_timestamp()
+        self.start_time = ah.now_to_timestamp()
         last_update_time = None
         throttle_interval = 0.5  # Only publish every 0.5 seconds
         
@@ -466,7 +466,7 @@ class MonteCarloRunner:
                 
                 if should_publish:
                     # Calculate estimated remaining time
-                    elapsed = jh.now_to_timestamp() - self.start_time
+                    elapsed = ah.now_to_timestamp() - self.start_time
                     if completed_count > 0:
                         avg_time_per_scenario = elapsed / completed_count
                         remaining_scenarios = self.num_scenarios - completed_count

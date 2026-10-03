@@ -5,7 +5,7 @@ from multiprocessing import cpu_count
 import optuna
 import ray
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.services.logger as logger
 from algorithex import exceptions
 from algorithex.services.redis import sync_publish
@@ -60,7 +60,7 @@ def ray_evaluate_trial(
         )
 
         # Log the trial details if debugging is enabled
-        if jh.is_debugging():
+        if ah.is_debugging():
             logger.log_optimize_mode(f"Ray Trial {trial_number}: Score={score}, Params={hp}", session_id )
 
         return {
@@ -100,7 +100,7 @@ class Optimizer:
         self.session_id = session_id
 
         # Retrieve the target strategy and its hyperparameter configuration
-        strategy_class = jh.get_strategy_class(router.routes[0].strategy_name)
+        strategy_class = ah.get_strategy_class(router.routes[0].strategy_name)
 
         self.strategy_hp = strategy_class.hyperparameters(None)
 
@@ -115,7 +115,7 @@ class Optimizer:
         self.study_name = f"{router.routes[0].strategy_name}_optuna_ray_{self.session_id}"
 
         self.solution_len = len(self.strategy_hp)
-        self.start_time = jh.now_to_timestamp()
+        self.start_time = ah.now_to_timestamp()
         self.fast_mode = fast_mode
         self.optimal_total = optimal_total
         self.training_warmup_candles = training_warmup_candles
@@ -125,7 +125,7 @@ class Optimizer:
         self.user_config = user_config
         # Ray workers do not inherit the coordinator's in-memory config, so
         # every trial receives the selected objective as an explicit input.
-        self.objective_function = jh.get_config('env.optimization.objective_function', 'sharpe').lower()
+        self.objective_function = ah.get_config('env.optimization.objective_function', 'sharpe').lower()
 
         # Validate and set the number of CPU cores to use
         if cpu_cores < 1:
@@ -134,7 +134,7 @@ class Optimizer:
         self.cpu_cores = cpu_cores if cpu_cores <= available else available
 
         # Get number of trials from settings
-        self.n_trials = self.solution_len * jh.get_config('env.optimization.trials', 200)
+        self.n_trials = self.solution_len * ah.get_config('env.optimization.trials', 200)
 
         # Create a progress bar instance to update the front end about optimization progress
         self.progressbar = Progressbar(self.n_trials)
@@ -167,7 +167,7 @@ class Optimizer:
                 ray.init(num_cpus=1, ignore_reinit_error=True)
                 self.ray_started_here = True
 
-        self.client_id = jh.get_session_id()
+        self.client_id = ah.get_session_id()
 
         # Load existing trials from the Optuna study
         self._load_study_trials()
@@ -340,11 +340,11 @@ class Optimizer:
 
         # Update the dashboard with general information about the progress
         general_info = {
-            'started_at': jh.timestamp_to_arrow(self.start_time).humanize(
-                jh.timestamp_to_arrow(jh.now(force_fresh=True))
+            'started_at': ah.timestamp_to_arrow(self.start_time).humanize(
+                ah.timestamp_to_arrow(ah.now(force_fresh=True))
             ),
             'trial': f'{self.completed_trials}/{self.n_trials}',
-            'objective_function': jh.get_config('env.optimization.objective_function', 'sharpe'),
+            'objective_function': ah.get_config('env.optimization.objective_function', 'sharpe'),
             'exchange_type': self.user_config['exchange']['type'],
             'simulation_model': self.user_config['exchange'].get('simulation_model'),
             'annualization': self.user_config['exchange'].get('annualization', 365),
@@ -378,13 +378,13 @@ class Optimizer:
             }
 
             # Debug log trial metrics
-            if jh.is_debugging():
-                jh.debug(f"Trial {trial_number} processed - fitness: {score}")
-                jh.debug(f"Trial {trial_number} has training metrics: {bool(training_metrics)}")
-                jh.debug(f"Trial {trial_number} has testing metrics: {bool(testing_metrics)}")
+            if ah.is_debugging():
+                ah.debug(f"Trial {trial_number} processed - fitness: {score}")
+                ah.debug(f"Trial {trial_number} has training metrics: {bool(training_metrics)}")
+                ah.debug(f"Trial {trial_number} has testing metrics: {bool(testing_metrics)}")
 
             # Get best candidates count from config
-            best_candidates_count = jh.get_config('env.optimization.best_candidates_count', 20)
+            best_candidates_count = ah.get_config('env.optimization.best_candidates_count', 20)
 
             # Insert into best_trials maintaining sorted order
             insert_idx = 0
@@ -417,7 +417,7 @@ class Optimizer:
     def _update_best_candidates(self):
         """Update the best candidates table in the dashboard"""
         # Get the objective function configuration
-        objective_function_config = jh.get_config('env.optimization.objective_function', 'sharpe').lower()
+        objective_function_config = ah.get_config('env.optimization.objective_function', 'sharpe').lower()
         mapping = {
             'sharpe': 'sharpe_ratio',
             'calmar': 'calmar_ratio',
@@ -557,11 +557,11 @@ class Optimizer:
                         if hasattr(e, 'cause') and isinstance(e.cause, RuntimeError) and 'RouteNotFound:' in str(e.cause):
                             raise e.cause
                         else:
-                            jh.debug(f'Ray task error for trial {trial_number}: {e}')
+                            ah.debug(f'Ray task error for trial {trial_number}: {e}')
                             original_exception = e.cause
                             raise
                     except Exception as e:
-                        jh.debug(f'Exception raised in the ray method for trial {trial_number}: {e}')
+                        ah.debug(f'Exception raised in the ray method for trial {trial_number}: {e}')
                         raise e
 
             # Get the best trial from the study

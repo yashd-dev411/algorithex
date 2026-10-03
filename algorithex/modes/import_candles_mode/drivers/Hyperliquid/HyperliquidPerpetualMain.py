@@ -1,5 +1,5 @@
 import requests
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from typing import Union
 from .hyperliquid_utils import timeframe_to_interval
@@ -15,7 +15,7 @@ class HyperliquidPerpetualMain(CandleExchange):
         self.all_org_symbols = {}
 
     def get_starting_time(self, symbol: str) -> Union[int, None]:
-        base_symbol = jh.get_base_asset(symbol)
+        base_symbol = ah.get_base_asset(symbol)
         headers = {
             'Content-Type': 'application/json',
         }
@@ -41,7 +41,7 @@ class HyperliquidPerpetualMain(CandleExchange):
         # and minute snapshots then narrow it down when the listing is recent enough to still
         # be inside their retention; an older listing keeps the day start, which is never later
         # than the first real candle.
-        now = int(jh.now_to_timestamp())
+        now = int(ah.now_to_timestamp())
         first_timestamp = first_candle('1d', 0, now)
         if first_timestamp is None:
             return None
@@ -76,7 +76,7 @@ class HyperliquidPerpetualMain(CandleExchange):
 
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

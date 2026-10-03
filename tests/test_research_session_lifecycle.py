@@ -82,7 +82,7 @@ def test_process_start_failure_removes_active_marker(monkeypatch):
 
 
 def _significance_runner(monkeypatch, active=True):
-    monkeypatch.setattr(significance_runner_module.jh, 'get_session_id', lambda: 'session-id')
+    monkeypatch.setattr(significance_runner_module.ah, 'get_session_id', lambda: 'session-id')
     monkeypatch.setattr(significance_runner_module, 'is_process_active', lambda value: active)
     return significance_runner_module.SignificanceTestRunner(
         session_id='session-id',
@@ -203,7 +203,7 @@ def test_significance_cancellation_preserves_explicit_termination(
 
 
 def _monte_carlo_runner(monkeypatch):
-    monkeypatch.setattr(monte_carlo_runner_module.jh, 'get_session_id', lambda: 'session-id')
+    monkeypatch.setattr(monte_carlo_runner_module.ah, 'get_session_id', lambda: 'session-id')
     monkeypatch.setattr(monte_carlo_runner_module, 'is_process_active', lambda value: True)
     monkeypatch.setattr(monte_carlo_runner_module.ray, 'is_initialized', lambda: False)
     monkeypatch.setattr(monte_carlo_runner_module.ray, 'init', lambda **kwargs: None)

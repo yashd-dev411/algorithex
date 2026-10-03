@@ -1,6 +1,6 @@
 import numpy as np
 from algorithex.routes import router
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.config import config
 from algorithex.enums import timeframes
 from algorithex.exceptions import RouteNotFound
@@ -25,7 +25,7 @@ class CandlesState:
         self.are_all_initiated = True
 
     def get_storage(self, exchange: str, symbol: str, timeframe: str) -> DynamicNumpyArray:
-        # inline jh.key() — this is called multiple times per simulated minute
+        # inline ah.key() — this is called multiple times per simulated minute
         try:
             return self.storage[f'{exchange}-{symbol}-{timeframe}']
         except KeyError:
@@ -36,20 +36,20 @@ class CandlesState:
             exchange, symbol = r['exchange'], r['symbol']
 
             # initiate the '1m' timeframes
-            key = jh.key(exchange, symbol, timeframes.MINUTE_1)
+            key = ah.key(exchange, symbol, timeframes.MINUTE_1)
             self.storage[key] = DynamicNumpyArray((bucket_size, 6))
 
             for timeframe in config['app']['considering_timeframes']:
-                key = jh.key(exchange, symbol, timeframe)
+                key = ah.key(exchange, symbol, timeframe)
                 # ex: 1440 / 60 + 1 (reserve one for forming candle)
-                total_bigger_timeframe = int((bucket_size / jh.timeframe_to_one_minutes(timeframe)) + 1)
+                total_bigger_timeframe = int((bucket_size / ah.timeframe_to_one_minutes(timeframe)) + 1)
                 self.storage[key] = DynamicNumpyArray((total_bigger_timeframe, 6))
 
     def forming_estimation(self, exchange: str, symbol: str, timeframe: str) -> tuple:
-        # inline jh.key() — this is on the hot path of every indicator call
+        # inline ah.key() — this is on the hot path of every indicator call
         long_key = f'{exchange}-{symbol}-{timeframe}'
         short_key = f'{exchange}-{symbol}-1m'
-        required_1m_to_complete_count = jh.timeframe_to_one_minutes(timeframe)
+        required_1m_to_complete_count = ah.timeframe_to_one_minutes(timeframe)
         current_1m_count = len(self.get_storage(exchange, symbol, '1m'))
         dif = current_1m_count % required_1m_to_complete_count
         return dif, long_key, short_key

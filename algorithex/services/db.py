@@ -2,7 +2,7 @@ import re
 
 from playhouse.postgres_ext import PostgresqlExtDatabase
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.env import ENV_VALUES
 
 
@@ -42,7 +42,7 @@ class Database:
     def open_connection(self) -> None:
         """Create Algorithex's PostgreSQL connection when the current process needs one."""
         # Non-project commands and unit tests do not use the application database.
-        if not jh.is_algorithex_project() or jh.is_unit_testing():
+        if not ah.is_algorithex_project() or ah.is_unit_testing():
             return
 
         # Reuse the existing database instance instead of opening another connection.

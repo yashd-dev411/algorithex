@@ -9,6 +9,14 @@ readme = "README.md"
 name = "algorithex_kernel"
 crate-type = ["cdylib"]
 
+[features]
+# The stable ABI lets a single binary serve every CPython 3.10+ on a platform,
+# which is what `algorithex/_native/__init__.py` assumes when it loads one file
+# per platform. It is also what makes cross-compiling possible at all, since a
+# version-specific build needs the target interpreter's headers.
+default = ["abi3"]
+abi3 = ["pyo3/abi3-py310"]
+
 [dependencies]
 pyo3 = { version = "0.20.3", features = ["extension-module"] }
 numpy = "0.20.0"

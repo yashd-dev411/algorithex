@@ -6,7 +6,7 @@ import json
 from algorithex.services.auth import require_auth, require_auth_any, require_auth_token
 from algorithex.services.multiprocessing import process_manager
 from algorithex.services.web import BacktestRequestJson, CancelRequestJson, UpdateBacktestSessionStateRequestJson, GetBacktestSessionsRequestJson, UpdateBacktestSessionNotesRequestJson, GetBacktestSessionChartDataRequestJson
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models.BacktestSession import (
     get_backtest_sessions as get_sessions,
     update_backtest_session_state,
@@ -34,7 +34,7 @@ def backtest(request_json: BacktestRequestJson):
     """
 
     try:
-        jh.validate_cwd()
+        ah.validate_cwd()
 
         # The upsert makes the accepted request visible before the worker can
         # publish progress or results for the same session.
@@ -182,7 +182,7 @@ def get_backtest_session_by_id(session_id: UUID):
 
     # Transform the session using the transformer
     transformed_session = get_backtest_session_for_load_more(session)
-    transformed_session = jh.clean_infinite_values(transformed_session)
+    transformed_session = ah.clean_infinite_values(transformed_session)
 
     return JSONResponse({
         'session': transformed_session
@@ -278,7 +278,7 @@ def get_backtest_session_chart_data(session_id: UUID, request_json: GetBacktestS
         }, status_code=404)
 
     stored_chart_data = (
-        jh.clean_nan_values(jh.clean_infinite_values(json.loads(session.chart_data)))
+        ah.clean_nan_values(ah.clean_infinite_values(json.loads(session.chart_data)))
         if session.chart_data else None
     )
     chart_data = None

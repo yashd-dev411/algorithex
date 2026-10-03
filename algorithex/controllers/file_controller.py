@@ -4,7 +4,7 @@ from algorithex.services.auth import require_auth, require_auth_token, unauthori
 from algorithex.modes import data_provider
 from algorithex.services.web import ImportApiKeyRequestJson, LoginRequestJson
 from algorithex.services.env import ENV_VALUES
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 router = APIRouter(prefix="/download", tags=["Download"])
 
 
@@ -30,7 +30,7 @@ def download_api_keys(
     if request_json.password != ENV_VALUES['PASSWORD']:
         return unauthorized_response()
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     return data_provider.download_api_keys()
 
@@ -76,7 +76,7 @@ def download_notification_api_keys(
     if request_json.password != ENV_VALUES['PASSWORD']:
         return unauthorized_response()
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     return data_provider.download_notification_api_keys()
 

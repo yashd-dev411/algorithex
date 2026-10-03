@@ -1,7 +1,7 @@
 from multiprocessing import cpu_count
 from typing import Dict, List, Optional
 import arrow
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.backtest_mode import load_candles
 from algorithex.services.validators import validate_routes
 from algorithex.store import store
@@ -66,8 +66,8 @@ def run(
         update_significance_test_session_status(session_id, 'running')
         update_significance_test_session_state(session_id, state, strategy_codes)
 
-        start_date_timestamp = jh.arrow_to_timestamp(arrow.get(start_date, 'YYYY-MM-DD'))
-        finish_date_timestamp = jh.arrow_to_timestamp(arrow.get(finish_date, 'YYYY-MM-DD'))
+        start_date_timestamp = ah.arrow_to_timestamp(arrow.get(start_date, 'YYYY-MM-DD'))
+        finish_date_timestamp = ah.arrow_to_timestamp(arrow.get(finish_date, 'YYYY-MM-DD'))
         warmup_candles, candles = load_candles(start_date_timestamp, finish_date_timestamp)
 
         runner = SignificanceTestRunner(
@@ -90,7 +90,7 @@ def run(
         if isinstance(e, (CandlesNotFound, CandleNotFoundInDatabase)):
             payload = e.args[0] if getattr(e, 'args', None) else None
             symbol = payload.get('symbol') if isinstance(payload, dict) else (routes[0].get('symbol') if routes else None)
-            warmup_num = jh.get_config('env.data.warmup_candles_num', 210)
+            warmup_num = ah.get_config('env.data.warmup_candles_num', 210)
             message = (
                 f"Missing candles for {symbol} on {exchange}. The Rule Significance Test from "
                 f"{start_date} to {finish_date} needs candles for that range plus ~{warmup_num} "

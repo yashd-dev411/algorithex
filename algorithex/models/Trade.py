@@ -1,5 +1,5 @@
 import peewee
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import numpy as np
 import threading
 
@@ -43,7 +43,7 @@ class Trade(peewee.Model):
 def store_trade_into_db(exchange: str, symbol: str, trade: np.ndarray) -> None:
     return
     d = {
-        'id': jh.generate_unique_id(),
+        'id': ah.generate_unique_id(),
         'timestamp': trade[0],
         'price': trade[1],
         'buy_qty': trade[2],
@@ -57,8 +57,8 @@ def store_trade_into_db(exchange: str, symbol: str, trade: np.ndarray) -> None:
     def async_save() -> None:
         Trade.insert(**d).on_conflict_ignore().execute()
         print(
-            jh.color(
-                f'trade: {jh.timestamp_to_time(d["timestamp"])}-{exchange}-{symbol}: {trade}',
+            ah.color(
+                f'trade: {ah.timestamp_to_time(d["timestamp"])}-{exchange}-{symbol}: {trade}',
                 'green'
             )
         )

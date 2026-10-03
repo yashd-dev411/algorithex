@@ -4,7 +4,7 @@ from multiprocessing import cpu_count
 import numpy as np
 import os
 from datetime import datetime
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.research import backtest
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
@@ -145,7 +145,7 @@ def monte_carlo_candles(
             cpu_cores, ray_started_here, progress_callback, result_callback
         )
     except Exception as e:
-        jh.debug(f"Error during Monte Carlo simulation: {e}")
+        ah.debug(f"Error during Monte Carlo simulation: {e}")
         raise
     finally:
         if ray_started_here and ray.is_initialized():

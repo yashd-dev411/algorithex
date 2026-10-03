@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.utils import get_exchange_type
 from algorithex.enums import exchanges
 from algorithex.info import exchange_info
@@ -132,7 +132,7 @@ def set_config(conf: dict) -> None:
     global config
 
     # optimization mode only
-    if jh.is_optimizing():
+    if ah.is_optimizing():
         # objective function
         if 'objective_function' in conf:
             config['env']['optimization']['objective_function'] = conf['objective_function']
@@ -145,7 +145,7 @@ def set_config(conf: dict) -> None:
             config['env']['optimization']['best_candidates_count'] = int(conf['best_candidates_count'])
 
     # backtest and live
-    if jh.is_backtesting() or jh.is_live():
+    if ah.is_backtesting() or ah.is_live():
         # warm_up_candles
         config['env']['data']['warmup_candles_num'] = int(conf['warm_up_candles'])
         # logs
@@ -161,7 +161,7 @@ def set_config(conf: dict) -> None:
             # backtest/RST worker, which then exited silently (the traceback was lost on
             # the os._exit() that follows), leaving the MCP/dashboard session stuck.
             name = e.get('name') or key
-            if jh.is_livetrading():
+            if ah.is_livetrading():
                 simulation_model = simulation_model_from_legacy_type(get_exchange_type(name))
                 annualization = resolve_annualization(exchange_info[name])
             else:
@@ -191,7 +191,7 @@ def set_config(conf: dict) -> None:
             config['env']['metrics']['annualization'] = int(selected_annualization)
 
     # live mode only
-    if jh.is_live():
+    if ah.is_live():
         config['env']['notifications'] = conf['notifications']
         config['env']['data']['persistency'] = conf['persistency']
         config['env']['data']['generate_candles_from_1m'] = conf['generate_candles_from_1m']
@@ -205,7 +205,7 @@ def reset_config() -> None:
     # identity while replacing every nested runtime mutation.
     config.clear()
     config.update(deepcopy(backup_config))
-    jh.clear_config_caches()
+    ah.clear_config_caches()
 
 
 backup_config = deepcopy(config)

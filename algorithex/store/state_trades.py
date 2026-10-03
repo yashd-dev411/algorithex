@@ -1,6 +1,6 @@
 from typing import List
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.libs import DynamicNumpyArray
 from algorithex.models.Trade import Trade
 from algorithex.routes import router
@@ -14,12 +14,12 @@ class TradesState:
     def init_storage(self) -> None:
         for ar in router.all_formatted_routes:
             exchange, symbol = ar['exchange'], ar['symbol']
-            key = jh.key(exchange, symbol)
+            key = ah.key(exchange, symbol)
             self.storage[key] = DynamicNumpyArray((60, 6), drop_at=120)
             self.temp_storage[key] = DynamicNumpyArray((100, 4))
 
     def add_trade(self, trade: np.ndarray, exchange: str, symbol: str) -> None:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         if (
             len(self.temp_storage[key])
             and trade[0] - self.temp_storage[key][0][0] >= 1000
@@ -49,11 +49,11 @@ class TradesState:
         self.temp_storage[key].append(trade)
 
     def get_trades(self, exchange: str, symbol: str) -> List[Trade]:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][:]
 
     def get_current_trade(self, exchange: str, symbol: str) -> Trade:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][-1]
 
     def get_past_trade(self, exchange: str, symbol: str, number_of_trades_ago: int) -> Trade:
@@ -61,5 +61,5 @@ class TradesState:
             raise ValueError('Max accepted value for number_of_trades_ago is 120')
 
         number_of_trades_ago = abs(number_of_trades_ago)
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         return self.storage[key][-1 - number_of_trades_ago]

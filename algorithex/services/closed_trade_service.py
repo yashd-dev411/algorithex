@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services import logger
 from algorithex.repositories import closed_trade_repository, order_repository
 from algorithex.store import store
@@ -9,12 +9,12 @@ from algorithex.models import ClosedTrade, Order, Position
 
 def create_trade_from_dict(attributes: dict) -> ClosedTrade:
     if attributes.get('created_at') is None:
-        attributes['created_at'] = jh.now_to_timestamp()
+        attributes['created_at'] = ah.now_to_timestamp()
     
     trade = ClosedTrade(attributes)
     
     # if it's live/paper trading, we store the trade in the database.
-    if jh.is_live():
+    if ah.is_live():
         closed_trade_repository.store_or_update(trade)
     
     return trade
@@ -30,7 +30,7 @@ def add_executed_order(executed_order: Order) -> None:
 
     add_order_record_only(executed_order)
 
-    if jh.is_live():
+    if ah.is_live():
         order_repository.store_or_update(executed_order)
 
 
@@ -70,7 +70,7 @@ def open_trade(position, p_orders: list = None) -> None:
         t.timeframe = position.strategy.timeframe
         t.strategy_name = position.strategy.name
     except AttributeError:
-        if not jh.is_unit_testing():
+        if not ah.is_unit_testing():
             raise
         # if some unit tests, we don't need to set the timeframe and strategy name.
         t.timeframe = None
@@ -79,7 +79,7 @@ def open_trade(position, p_orders: list = None) -> None:
     t.symbol = position.symbol
     t.type = position.type
     t.session_id = store.app.session_id
-    if jh.is_live() or jh.is_paper_trading():
+    if ah.is_live() or ah.is_paper_trading():
         closed_trade_repository.store_or_update(t)
     if p_orders:
         for order in p_orders:
@@ -103,15 +103,15 @@ def close_trade(position: Position) -> None:
     try:
         position.strategy.trades_count += 1
     except AttributeError:
-        if not jh.is_unit_testing():
+        if not ah.is_unit_testing():
             raise
 
-    if jh.is_livetrading():
+    if ah.is_livetrading():
         closed_trade_repository.store_or_update(t)
 
     store.closed_trades.trades.append(t)
     closed_trade_repository.close_trade(t)
-    if not jh.is_unit_testing():
+    if not ah.is_unit_testing():
         logger.info(
             f"CLOSED a {t.type} trade for {t.exchange}-{t.symbol}: qty: {t.qty},"
             f" entry_price: {t.entry_price}, exit_price: {t.exit_price}, "

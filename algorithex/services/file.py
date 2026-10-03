@@ -6,7 +6,7 @@ import arrow
 
 from algorithex.config import config
 from algorithex.store import store
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 def store_logs(export_json: bool = False, export_csv: bool = False) -> dict:
@@ -17,7 +17,7 @@ def store_logs(export_json: bool = False, export_csv: bool = False) -> dict:
         }
 
     result = {}
-    file_name = jh.get_session_id()
+    file_name = ah.get_session_id()
     trades_json = {'trades': [], 'considering_timeframes': config['app']['considering_timeframes']}
     for t in store.closed_trades.trades:
         trades_json['trades'].append(t.to_json)

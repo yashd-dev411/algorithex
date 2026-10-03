@@ -14,7 +14,7 @@ import shutil
 import tarfile
 import zipfile
 import tempfile
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 #Global variable to store the LSP default port
 LSP_DEFAULT_PORT = 9001
@@ -230,7 +230,7 @@ def install_lsp_server(allow_skip: bool = False) -> bool:
                 raise
             except Exception:
                 if installed:
-                    click.echo(jh.color("Could not check for LSP updates. Using the installed version.", 'yellow'))
+                    click.echo(ah.color("Could not check for LSP updates. Using the installed version.", 'yellow'))
                     return True
                 raise
 
@@ -277,7 +277,7 @@ def install_lsp_server(allow_skip: bool = False) -> bool:
                 shutil.rmtree(target_dir)
             shutil.copytree(source_dir, target_dir)
             _save_lsp_version(latest_version)
-            click.echo(jh.color("✓ Python Language Server installed successfully", 'green'))
+            click.echo(ah.color("✓ Python Language Server installed successfully", 'green'))
             return True
     except _SkipLSP:
         click.echo("Skipping Python Language Server for this run. Editor code intelligence will be unavailable.")
@@ -291,7 +291,7 @@ def run_lsp_server():
     global LSP_PROCESS
     
     if LSP_PROCESS:
-        print(jh.color("Python Language Server is already running", 'yellow'))
+        print(ah.color("Python Language Server is already running", 'yellow'))
         return
     
     from algorithex import ALGORITHEX_DIR
@@ -317,7 +317,7 @@ def run_lsp_server():
     if 'LSP_PORT' in ENV_VALUES:
         port = int(ENV_VALUES['LSP_PORT'])
     else:
-        print(jh.color(f"LSP_PORT is not set in the .env file. Using default port {LSP_DEFAULT_PORT}", 'yellow'))
+        print(ah.color(f"LSP_PORT is not set in the .env file. Using default port {LSP_DEFAULT_PORT}", 'yellow'))
         port = LSP_DEFAULT_PORT
         
     # Get the workspace root (Algorithex bot root) (e.g., /home/user/algorithex-bot)
@@ -363,17 +363,17 @@ def terminate_lsp_server():
     global LSP_PROCESS
     if LSP_PROCESS:
         try:
-            print(jh.color("Stopping Python Language Server...", 'yellow'))
+            print(ah.color("Stopping Python Language Server...", 'yellow'))
             LSP_PROCESS.terminate()
             LSP_PROCESS.wait(timeout=5)
-            print(jh.color("✓ Python Language Server stopped", 'green'))
+            print(ah.color("✓ Python Language Server stopped", 'green'))
         except Exception as e:
-            print(jh.color(f"⚠ Error stopping LSP: {str(e)}", 'yellow'))
+            print(ah.color(f"⚠ Error stopping LSP: {str(e)}", 'yellow'))
             try:
-                print(jh.color("Force killing Python Language Server...", 'yellow'))
+                print(ah.color("Force killing Python Language Server...", 'yellow'))
                 LSP_PROCESS.kill()  # Force kill if terminate fails
             except:
                 pass
         finally:
             LSP_PROCESS = None
-            print(jh.color("✓ Python Language Server terminated", 'green'))
+            print(ah.color("✓ Python Language Server terminated", 'green'))

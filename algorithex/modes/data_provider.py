@@ -3,7 +3,7 @@ import os
 import numpy as np
 import peewee
 from fastapi.responses import FileResponse
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.info import live_trading_exchanges, backtesting_exchanges
 from algorithex.repositories import candle_repository
 from algorithex.services import candle_service
@@ -28,9 +28,9 @@ def get_candles(exchange: str, symbol: str, timeframe: str):
     db_config = json.loads(o.json)
     warmup_candles_num = db_config['live']['warm_up_candles']
 
-    one_min_count = jh.timeframe_to_one_minutes(timeframe)
-    finish_date = jh.now(force_fresh=True)
-    start_date = jh.get_candle_start_timestamp_based_on_timeframe(timeframe, warmup_candles_num)
+    one_min_count = ah.timeframe_to_one_minutes(timeframe)
+    finish_date = ah.now(force_fresh=True)
+    start_date = ah.get_candle_start_timestamp_based_on_timeframe(timeframe, warmup_candles_num)
 
     # fetch value of generate_candles_from_1m fresh from the database
     o = Option.get(Option.type == 'config')
@@ -138,7 +138,7 @@ def get_config(client_config: dict, has_live=False) -> dict:
 
         # merge it with client's config (because it could include new keys added),
         # update it in the database, and then return it
-        data = jh.merge_dicts(client_config, json.loads(o.json))
+        data = ah.merge_dicts(client_config, json.loads(o.json))
 
         # Defensive: tolerate a malformed or partial stored config so /config/get can
         # never 500 (e.g. a double-wrapped config from a get->update round-trip, or a
@@ -156,14 +156,14 @@ def get_config(client_config: dict, has_live=False) -> dict:
                 if k not in live_trading_exchanges:
                     del data['live']['exchanges'][k]
 
-        o.updated_at = jh.now(True)
+        o.updated_at = ah.now(True)
         o.save()
     except peewee.DoesNotExist:
         # if not found, that means it's the first time. Store in the DB and
         # then return what was sent from the client side without changing it
         o = Option({
-            'id': jh.generate_unique_id(),
-            'updated_at': jh.now(True),
+            'id': ah.generate_unique_id(),
+            'updated_at': ah.now(True),
             'type': 'config',
             'json': json.dumps(client_config)
         })
@@ -195,10 +195,10 @@ def update_config(client_config: dict):
     # MCP server (or any future scripted client) can update a single section
     # without nuking the rest of the config.
     existing = json.loads(o.json) if o.json else {}
-    merged = jh.merge_dicts(existing, client_config)
+    merged = ah.merge_dicts(existing, client_config)
 
     o.json = json.dumps(merged)
-    o.updated_at = jh.now(True)
+    o.updated_at = ah.now(True)
 
     o.save()
 
@@ -351,13 +351,13 @@ def import_api_keys_from_csv(content: str) -> Dict[str, any]:
 
             # Persist
             exchange_api_key: ExchangeApiKeys = ExchangeApiKeys.create(
-                id=jh.generate_unique_id(),
+                id=ah.generate_unique_id(),
                 exchange_name=exchange,
                 name=name,
                 api_key=api_key,
                 api_secret=api_secret,
                 additional_fields=json.dumps(additional_fields),
-                created_at=jh.now_to_datetime(),
+                created_at=ah.now_to_datetime(),
                 general_notifications_id=None,
                 error_notifications_id=None
             )
@@ -472,11 +472,11 @@ def import_notification_api_keys_from_csv(content: str) -> Dict[str, any]:
                 fields = {'webhook': webhook}
 
             NotificationApiKeys.create(
-                id=jh.generate_unique_id(),
+                id=ah.generate_unique_id(),
                 name=name,
                 driver=driver,
                 fields=json.dumps(fields),
-                created_at=jh.now_to_datetime(),
+                created_at=ah.now_to_datetime(),
             )
             imported_names.append(name)
 
@@ -496,7 +496,7 @@ def get_backtest_logs(session_id: str):
     with open(path, "r") as f:
         content = f.read()
 
-    return jh.compressed_response(content)
+    return ah.compressed_response(content)
 
 
 def get_monte_carlo_logs(session_id: str):

@@ -155,3 +155,4 @@ pyrightconfig.json
 # `*.py[cod]` above also matches `*.pyd`, so re-include these explicitly.
 !algorithex/_native/bin/*.pyd
 !algorithex/_native/bin/*.so
+!algorithex/_native/bin/*.dylib

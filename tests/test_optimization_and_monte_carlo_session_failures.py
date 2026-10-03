@@ -55,7 +55,7 @@ def test_orphaned_worker_session_is_reconciled_as_stopped(
     )
     status_updates = []
 
-    monkeypatch.setattr(model.jh, 'is_unit_testing', lambda: False)
+    monkeypatch.setattr(model.ah, 'is_unit_testing', lambda: False)
     monkeypatch.setattr('algorithex.services.redis.is_process_active', lambda session_id: False)
     monkeypatch.setattr(
         model,
@@ -128,7 +128,7 @@ def test_optimization_controller_persists_session_before_worker_start(monkeypatc
         state={'form': {'id': session_id}},
     )
 
-    monkeypatch.setattr(optimization_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(optimization_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         optimization_controller,
         'get_optimization_session_by_id_from_db',
@@ -235,7 +235,7 @@ def test_monte_carlo_controller_persists_session_before_worker_start(monkeypatch
         state={'form': {'id': session_id}},
     )
 
-    monkeypatch.setattr(monte_carlo_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(monte_carlo_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         monte_carlo_controller,
         'get_monte_carlo_session_by_id',

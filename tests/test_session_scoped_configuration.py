@@ -98,7 +98,7 @@ def test_spot_exchange_metadata_does_not_advertise_leverage_modes():
 def test_backtest_persists_the_accepted_form_before_starting_worker(monkeypatch):
     calls = []
     state = {'form': {'config': {'warm_up_candles': 432}}}
-    monkeypatch.setattr(backtest_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(backtest_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         backtest_controller,
         'update_backtest_session_state',
@@ -205,7 +205,7 @@ def test_live_rejects_reusing_a_terminal_session_id(monkeypatch):
         'algorithex_live',
         SimpleNamespace(live_mode=SimpleNamespace(run=lambda: None)),
     )
-    monkeypatch.setattr(live_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(live_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         live_controller.live_session_repository,
         'get_live_session_by_id',
@@ -229,7 +229,7 @@ def test_live_draft_stores_its_config_snapshot(monkeypatch):
         'algorithex_live',
         SimpleNamespace(live_mode=SimpleNamespace(run=lambda: None)),
     )
-    monkeypatch.setattr(live_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(live_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         live_controller.live_session_repository,
         'get_live_session_by_id',
@@ -252,7 +252,7 @@ def test_monte_carlo_resume_uses_the_stored_config_and_state(monkeypatch):
     stored_state = {'form': {'config': {'cpu_cores': 5, 'warm_up_candles': 987}}}
     session = SimpleNamespace(state='serialized', state_json=stored_state)
     worker_args = []
-    monkeypatch.setattr(monte_carlo_controller.jh, 'validate_cwd', lambda: None)
+    monkeypatch.setattr(monte_carlo_controller.ah, 'validate_cwd', lambda: None)
     monkeypatch.setattr(
         monte_carlo_controller,
         'get_monte_carlo_session_by_id',

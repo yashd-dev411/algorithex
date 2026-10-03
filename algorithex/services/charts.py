@@ -225,8 +225,8 @@ def _plot_backtest_charts(session_id: str, charts_folder: str, theme: str = 'lig
                 bench_series.append((r.symbol, color, bench_dates, bench_balance, bench_multiplier))
                 ax.plot(bench_dates, bench_balance, color=color, linewidth=1.2, linestyle='--', label=r.symbol)
             except Exception as e:
-                import algorithex.helpers as jh
-                jh.error(f'Could not generate benchmark chart for {r.symbol}: {e}')
+                import algorithex.helpers as ah
+                ah.error(f'Could not generate benchmark chart for {r.symbol}: {e}')
 
     ax.set_ylabel('Balance', color=t['text_color'])
     ax.set_xlabel('Date', color=t['text_color'])

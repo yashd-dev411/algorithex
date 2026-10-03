@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Optional
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.enums import order_statuses
 from algorithex.repositories import (
     candle_repository,
@@ -45,9 +45,9 @@ def _candle_window(
     candle_count: int,
 ) -> tuple[int, int, int, int, int]:
     count = max(MIN_CANDLE_COUNT, min(int(candle_count), MAX_CANDLE_COUNT))
-    timeframe_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+    timeframe_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
     session_start = int(session.created_at)
-    session_end = int(session.finished_at or jh.now(force_fresh=True))
+    session_end = int(session.finished_at or ah.now(force_fresh=True))
     lower_bound = session_start - (CONTEXT_CANDLES * timeframe_ms)
     span = max(0, count - 1) * timeframe_ms
 
@@ -75,10 +75,10 @@ def _full_candle_window(
     trades: list,
     chart_bounds: Optional[tuple[int, int]],
 ) -> tuple[int, int, int, int, int]:
-    timeframe_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+    timeframe_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
     lower_bound = int(session.created_at) - (CONTEXT_CANDLES * timeframe_ms)
     activity_times = [
-        int(session.finished_at or jh.now(force_fresh=True)),
+        int(session.finished_at or ah.now(force_fresh=True)),
         *[
             int(order.executed_at)
             for order in orders
@@ -250,7 +250,7 @@ def get_live_session_chart_data(
         for trade in session_trades
     ]
 
-    route_key = jh.key(exchange, symbol, timeframe)
+    route_key = ah.key(exchange, symbol, timeframe)
     strategy_charts = _strategy_charts_for_window(
         str(session.id),
         exchange,

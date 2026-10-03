@@ -1,7 +1,7 @@
 import json
 from types import SimpleNamespace
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.controllers import live_controller
 from algorithex.services import live_chart_service
 from algorithex.services.web import GetLiveSessionChartDataRequestJson
@@ -43,7 +43,7 @@ def test_live_chart_data_builds_a_bounded_route_snapshot(monkeypatch):
     monkeypatch.setattr(live_chart_service.transformers, 'get_order_details', lambda order: {'id': 'order-1'})
     monkeypatch.setattr(live_chart_service.transformers, 'get_closed_trade_details', lambda trade: {'id': 'trade-1'})
     monkeypatch.setattr(live_chart_service, 'get_live_charts_snapshot', lambda session_id: {
-        jh.key('Sandbox', 'BTC-USDT', '1m'): {
+        ah.key('Sandbox', 'BTC-USDT', '1m'): {
             'lines': {
                 'EMA': {
                     'data': [
@@ -143,7 +143,7 @@ def test_live_chart_data_merges_durable_history_with_the_redis_tail(monkeypatch)
         'horizontal_extra_lines': {},
     })
     monkeypatch.setattr(live_chart_service, 'get_live_charts_snapshot', lambda session_id: {
-        jh.key('Sandbox', 'BTC-USDT', '1m'): {
+        ah.key('Sandbox', 'BTC-USDT', '1m'): {
             'lines': {
                 'EMA': {
                     'color': 'green',

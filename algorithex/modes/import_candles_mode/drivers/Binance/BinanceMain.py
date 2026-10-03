@@ -1,5 +1,5 @@
 import requests
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from typing import Union
 from .binance_utils import timeframe_to_interval
@@ -59,7 +59,7 @@ class BinanceMain(CandleExchange):
         raise Exception(f"Failed to make request after {max_retries} attempts")
 
     def get_starting_time(self, symbol: str) -> Union[int, None]:
-        dashless_symbol = jh.dashless_symbol(symbol)
+        dashless_symbol = ah.dashless_symbol(symbol)
 
         # Asking for one-minute candles from time zero returns the symbol's very first candle.
         # The previous weekly lookup skipped the whole listing week and reported a date in the
@@ -84,9 +84,9 @@ class BinanceMain(CandleExchange):
         return int(data[0][0])
 
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> Union[list, None]:
-        end_timestamp = start_timestamp + (self.count - 1) * 60000 * jh.timeframe_to_one_minutes(timeframe)
+        end_timestamp = start_timestamp + (self.count - 1) * 60000 * ah.timeframe_to_one_minutes(timeframe)
         interval = timeframe_to_interval(timeframe)
-        dashless_symbol = jh.dashless_symbol(symbol)
+        dashless_symbol = ah.dashless_symbol(symbol)
 
         payload = {
             'interval': interval,
@@ -105,7 +105,7 @@ class BinanceMain(CandleExchange):
 
         data = response.json()
         return [{
-            'id': jh.generate_unique_id(),
+            'id': ah.generate_unique_id(),
             'exchange': self.name,
             'symbol': symbol,
             'timeframe': timeframe,
@@ -124,7 +124,7 @@ class BinanceMain(CandleExchange):
 
         data = response.json()
 
-        return [jh.dashy_symbol(d['symbol']) for d in data['symbols']]
+        return [ah.dashy_symbol(d['symbol']) for d in data['symbols']]
 
     @property
     def _prefix_address(self):

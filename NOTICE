@@ -1,0 +1,66 @@
+Algorithex
+=========
+
+This project is a fork of **Jesse** (https://github.com/jesse-ai/jesse), an
+open-source crypto trading framework distributed under the MIT License.
+
+Upstream copyright
+------------------
+
+    Copyright (c) 2020 Jesse.Trade
+
+All rights reserved by their respective owners.
+
+The MIT License permits use, copying, modification, merging, publication,
+distribution, sublicensing and sale, **provided the original copyright notice
+and permission notice are retained**. Those notices are preserved verbatim in
+the `LICENSE` file at the root of this repository.
+
+We are grateful to Jesse Mir and to every contributor who has worked on the
+upstream project. A substantial portion of this codebase — including the
+strategy API, the indicator library, the backtest engine, the exchange
+integrations and the research tooling — originates in that project and is used
+under the terms of its MIT License. Upstream contributors are credited in the
+Git history of https://github.com/jesse-ai/jesse.
+
+Modifications made in this fork
+-------------------------------
+
+This fork is distributed under the name **Algorithex** and includes the
+following changes relative to upstream:
+
+* Rebranding of the Python package from ``jesse`` to ``algorithex``, including
+  the import namespace, the Docker image name and the user-facing strings.
+* Renaming of the helper-module import alias from ``jh`` to ``ah``
+  (``import algorithex.helpers as ah``).
+* Removal of the hosted-service dependencies (license tokens and account
+  redirects) so the framework runs fully self-hosted.
+* The native indicator kernel was renamed and rebuilt from source as
+  ``algorithex_kernel``. Sources are in ``native-kernel/``; prebuilt binaries
+  for Linux, Windows and macOS (Apple Silicon) are vendored under
+  ``algorithex/_native/bin/``. The kernel is built for the stable ABI, so a
+  single binary per platform serves CPython 3.10 and later.
+* Four new research modules, developed for this fork and not present upstream:
+  ``algorithex/research/walkforward`` (purged walk-forward and combinatorial
+  cross-validation), ``algorithex/research/regime`` (hidden Markov regime
+  detection, change-point detection and regime-aware position sizing),
+  ``algorithex/portfolio`` (correlation-aware allocation and risk parity) and
+  ``algorithex/research/attribution`` (trade-level and feature-level
+  attribution).
+* Five further modules, also developed for this fork and not present upstream:
+  ``algorithex/execution/costs.py`` and ``book.py`` (slippage and queue-aware
+  fill models), ``algorithex/execution/algos.py`` (TWAP, POV, VWAP and
+  Almgren-Chriss optimal execution scheduling with implementation-shortfall
+  decomposition), ``algorithex/audit/leakage.py`` (static and runtime
+  look-ahead detection), ``algorithex/audit/robustness.py`` (adversarial data
+  attacks and certified worst-case price search),
+  ``algorithex/research/ensemble.py`` (strategy combination, regime-conditional
+  arbitration and causal walk-forward reallocation),
+  ``algorithex/research/overfitting.py`` (probability of backtest overfitting
+  by CSCV, deflated Sharpe ratio and parameter-plateau analysis) and
+  ``algorithex/research/certification.py`` (composes the audits into a single
+  graded verdict).
+
+The modifications are likewise distributed under the MIT License. If you
+intend to redistribute this fork, retain the copyright and permission notices
+above.

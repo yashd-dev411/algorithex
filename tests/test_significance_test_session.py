@@ -15,7 +15,7 @@ def test_orphaned_running_session_is_reconciled_as_stopped(monkeypatch):
     )
     status_updates = []
 
-    monkeypatch.setattr(session_model.jh, 'is_unit_testing', lambda: False)
+    monkeypatch.setattr(session_model.ah, 'is_unit_testing', lambda: False)
     monkeypatch.setattr('algorithex.services.redis.is_process_active', lambda session_id: False)
     monkeypatch.setattr(
         session_model,

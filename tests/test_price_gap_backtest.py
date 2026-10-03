@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import research
 from algorithex.enums import order_types
 from algorithex.store import store
@@ -214,7 +214,7 @@ def _run_price_gap_backtest(
         'timeframe': '5m',
     }]
     candle_data = {
-        jh.key(EXCHANGE, SYMBOL): {
+        ah.key(EXCHANGE, SYMBOL): {
             'exchange': EXCHANGE,
             'symbol': SYMBOL,
             'candles': candles,

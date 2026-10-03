@@ -10,7 +10,7 @@ from algorithex.services.general_info import get_external_general_info, get_gene
 from algorithex.services.auth import require_auth
 from algorithex.version import __version__ as algorithex_version
 from algorithex.models import BacktestSession, OptimizationSession, LiveSession, MonteCarloSession, SignificanceTestSession
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 router = APIRouter(prefix="/system", tags=["System"], dependencies=[Depends(require_auth)])
 
@@ -37,7 +37,7 @@ def report_exception(json_request: ReportExceptionRequestJson) -> JSONResponse:
         json_request.attach_logs,
         json_request.session_id,
         json_request.email,
-        has_live=jh.has_live_trade_plugin()
+        has_live=ah.has_live_trade_plugin()
     )
 
 
@@ -48,9 +48,9 @@ def general_info() -> JSONResponse:
     """
 
     try:
-        data = get_general_info(has_live=jh.has_live_trade_plugin())
+        data = get_general_info(has_live=ah.has_live_trade_plugin())
     except Exception as e:
-        jh.error(str(e))
+        ah.error(str(e))
         return JSONResponse({
             'error': str(e)
         }, status_code=500)
@@ -64,9 +64,9 @@ def general_info() -> JSONResponse:
 @router.post("/general-info/local")
 def local_general_info() -> JSONResponse:
     try:
-        data = get_local_general_info(has_live=jh.has_live_trade_plugin())
+        data = get_local_general_info(has_live=ah.has_live_trade_plugin())
     except Exception as e:
-        jh.error(str(e))
+        ah.error(str(e))
         return JSONResponse({
             'error': str(e)
         }, status_code=500)
@@ -77,9 +77,9 @@ def local_general_info() -> JSONResponse:
 @router.post("/general-info/external")
 def external_general_info() -> JSONResponse:
     try:
-        data = get_external_general_info(has_live=jh.has_live_trade_plugin())
+        data = get_external_general_info(has_live=ah.has_live_trade_plugin())
     except Exception as e:
-        jh.error(str(e))
+        ah.error(str(e))
         return JSONResponse({
             'error': str(e)
         }, status_code=500)
@@ -144,7 +144,7 @@ def user_activity() -> JSONResponse:
     Get user activity stats (backtests, optimizations, etc)
     """
 
-    current_timestamp = jh.now_to_timestamp(True)
+    current_timestamp = ah.now_to_timestamp(True)
     day_ago = current_timestamp - (24 * 60 * 60 * 1000)
     week_ago = current_timestamp - (7 * 24 * 60 * 60 * 1000)
 
@@ -164,7 +164,7 @@ def user_activity() -> JSONResponse:
         monte_carlo = get_counts(MonteCarloSession)
         significance_tests = get_counts(SignificanceTestSession)
     except Exception as e:
-        jh.error(str(e))
+        ah.error(str(e))
         backtests = optimizations = live_sessions = monte_carlo = significance_tests = {'all_time': 0, 'last_24h': 0, 'last_7d': 0}
 
     return JSONResponse({

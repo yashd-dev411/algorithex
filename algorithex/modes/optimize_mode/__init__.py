@@ -1,7 +1,7 @@
 from multiprocessing import cpu_count
 from typing import Dict, List, Tuple
 import arrow
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.backtest_mode import load_candles
 from algorithex.services.validators import validate_routes
 from algorithex.store import store
@@ -88,8 +88,8 @@ def run(
             update_optimization_session_status(session_id, 'running')
             update_optimization_session_state(session_id, state, strategy_codes)
 
-            if jh.is_debugging():
-                jh.debug(f"Resuming existing optimization session with ID: {session_id}")
+            if ah.is_debugging():
+                ah.debug(f"Resuming existing optimization session with ID: {session_id}")
         else:
             # Session doesn't exist, create a new one
             store_optimization_session(
@@ -99,8 +99,8 @@ def run(
             )
             update_optimization_session_state(session_id, state)
 
-            if jh.is_debugging():
-                jh.debug(f"Created new optimization session with ID: {session_id}")
+            if ah.is_debugging():
+                ah.debug(f"Created new optimization session with ID: {session_id}")
 
         optimizer = Optimizer(
             session_id,
@@ -128,7 +128,7 @@ def run(
         if isinstance(e, (CandlesNotFound, CandleNotFoundInDatabase)):
             payload = e.args[0] if getattr(e, 'args', None) else None
             symbol = payload.get('symbol') if isinstance(payload, dict) else (routes[0].get('symbol') if routes else None)
-            warmup_num = jh.get_config('env.data.warmup_candles_num', 210)
+            warmup_num = ah.get_config('env.data.warmup_candles_num', 210)
             message = (
                 f"Missing candles for {symbol} on {exchange}. Optimization needs candles for BOTH the "
                 f"training window ({training_start_date} to {training_finish_date}) and the testing window "
@@ -156,10 +156,10 @@ def _get_training_and_testing_candles(
         testing_start_date: str,
         testing_finish_date: str
 ) -> Tuple[dict, dict, dict, dict]:
-    training_start_date_timestamp = jh.arrow_to_timestamp(arrow.get(training_start_date, 'YYYY-MM-DD'))
-    training_finish_date_timestamp = jh.arrow_to_timestamp(arrow.get(training_finish_date, 'YYYY-MM-DD'))
-    testing_start_date_timestamp = jh.arrow_to_timestamp(arrow.get(testing_start_date, 'YYYY-MM-DD'))
-    testing_finish_date_timestamp = jh.arrow_to_timestamp(arrow.get(testing_finish_date, 'YYYY-MM-DD'))
+    training_start_date_timestamp = ah.arrow_to_timestamp(arrow.get(training_start_date, 'YYYY-MM-DD'))
+    training_finish_date_timestamp = ah.arrow_to_timestamp(arrow.get(training_finish_date, 'YYYY-MM-DD'))
+    testing_start_date_timestamp = ah.arrow_to_timestamp(arrow.get(testing_start_date, 'YYYY-MM-DD'))
+    testing_finish_date_timestamp = ah.arrow_to_timestamp(arrow.get(testing_finish_date, 'YYYY-MM-DD'))
 
     # fetch training candles
     training_warmup_candles, training_candles = load_candles(training_start_date_timestamp, training_finish_date_timestamp)

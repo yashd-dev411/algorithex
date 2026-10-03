@@ -5,7 +5,7 @@ from algorithex.services import auth as authenticator
 from algorithex.services.auth import require_auth
 from algorithex.services.multiprocessing import process_manager
 from algorithex.services.web import LoginRequestJson
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -40,7 +40,7 @@ async def shutdown(background_tasks: BackgroundTasks):
     Shutdown the application
     """
 
-    background_tasks.add_task(jh.terminate_app)
+    background_tasks.add_task(ah.terminate_app)
     return JSONResponse({'message': 'Shutting down...'})
 
 

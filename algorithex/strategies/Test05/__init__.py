@@ -1,5 +1,5 @@
 from algorithex.strategies import Strategy
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 # test_is_smart_enough_to_open_positions_via_market_orders

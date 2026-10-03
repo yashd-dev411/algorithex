@@ -24,7 +24,7 @@ the directory name, and the string passed to `single_route_backtest` must all ma
 
 ```python
 from algorithex.strategies import Strategy
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import utils
 
 

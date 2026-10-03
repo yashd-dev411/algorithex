@@ -3,7 +3,7 @@ import time
 import re
 from typing import Dict, List, Tuple, Optional
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.services.metrics as stats
 from algorithex import exceptions
 from algorithex.config import config
@@ -30,7 +30,7 @@ from algorithex._native import candle_from_one_minutes as candle_from_one_minute
 
 def _raise_if_cancelled(client_id: str) -> None:
     """Stop from the active backtest path when its process marker is removed."""
-    if not jh.is_unit_testing() and not is_process_active(client_id):
+    if not ah.is_unit_testing() and not is_process_active(client_id):
         raise exceptions.Termination
 
 
@@ -118,7 +118,7 @@ def _execute_backtest(
     from algorithex.config import set_config
 
     # inject config
-    if not jh.is_unit_testing():
+    if not ah.is_unit_testing():
         set_config(user_config)
     # add exchange to routes
     for r in routes:
@@ -144,7 +144,7 @@ def _execute_backtest(
     position_service.initialize_positions_state()
 
     # Store backtest session in database (only for UI dashboard, not for CLI/research)
-    if not jh.should_execute_silently():
+    if not ah.should_execute_silently():
         from algorithex.models.BacktestSession import store_backtest_session
         store_backtest_session(
             id=client_id,
@@ -155,8 +155,8 @@ def _execute_backtest(
     if candles is None:
         try:
             warmup_candles, candles = load_candles(
-                jh.date_to_timestamp(start_date),
-                jh.date_to_timestamp(finish_date)
+                ah.date_to_timestamp(start_date),
+                ah.date_to_timestamp(finish_date)
             )
             _handle_warmup_candles(warmup_candles, start_date)
         except exceptions.CandlesNotFound as e:
@@ -166,9 +166,9 @@ def _execute_backtest(
 
     _raise_if_cancelled(client_id)
 
-    if not jh.should_execute_silently():
+    if not ah.should_execute_silently():
         sync_publish('general_info', {
-            'session_id': jh.get_session_id(),
+            'session_id': ah.get_session_id(),
             'debug_mode': str(config['app']['debug_mode']),
         })
         # candles info
@@ -182,7 +182,7 @@ def _execute_backtest(
     try:
         result = simulator(
             candles,
-            run_silently=jh.should_execute_silently(),
+            run_silently=ah.should_execute_silently(),
             generate_csv=csv,
             generate_json=json,
             benchmark=benchmark,
@@ -220,7 +220,7 @@ def _execute_backtest(
         raise
     except Exception as e:
         # Store exception in database (only for UI dashboard)
-        if not jh.should_execute_silently():
+        if not ah.should_execute_silently():
             import traceback
             from algorithex.models.BacktestSession import store_backtest_session_exception, update_backtest_session_status
             store_backtest_session_exception(
@@ -231,7 +231,7 @@ def _execute_backtest(
             update_backtest_session_status(client_id, 'stopped')
         raise
 
-    if result and not jh.should_execute_silently():
+    if result and not ah.should_execute_silently():
         _raise_if_cancelled(client_id)
         sync_publish('alert', {
             'message': f"Successfully executed backtest simulation in: {result['execution_duration']} seconds",
@@ -316,12 +316,12 @@ def _handle_sync_no_candles(e, start_date, exchange, client_id=None, finish_date
     if symbol:
         # Compute the earliest date the run actually needs (warm-up candles included)
         # so the error tells the agent/user exactly what to import to fix it.
-        warmup_num = jh.get_config('env.data.warmup_candles_num', 210)
+        warmup_num = ah.get_config('env.data.warmup_candles_num', 210)
         required_start = start_date
         if warmup_num > 0:
-            required_start_ts = jh.date_to_timestamp(start_date) - (
-                warmup_num * jh.timeframe_to_one_minutes(jh.max_timeframe(config['app']['considering_timeframes'])) * 2 * 60_000)
-            required_start = jh.timestamp_to_date(required_start_ts)
+            required_start_ts = ah.date_to_timestamp(start_date) - (
+                warmup_num * ah.timeframe_to_one_minutes(ah.max_timeframe(config['app']['considering_timeframes'])) * 2 * 60_000)
+            required_start = ah.timestamp_to_date(required_start_ts)
 
         message = (
             f"Missing candles for {symbol} on {exchange}. This run needs data from "
@@ -342,7 +342,7 @@ def _handle_sync_no_candles(e, start_date, exchange, client_id=None, finish_date
 
         # Persist a terminal error so polling clients never mistake this failed run
         # for active work.
-        if client_id is not None and not jh.should_execute_silently():
+        if client_id is not None and not ah.should_execute_silently():
             from algorithex.models.BacktestSession import (
                 store_backtest_session_exception,
                 update_backtest_session_status,
@@ -451,7 +451,7 @@ def _get_add_horizontal_line_to_extra_chart():
 
 def _handle_missing_candles(exchange: str, symbol: str, start_date: int, message: str = None):
     """Helper function to handle missing candles scenarios"""
-    formatted_date = jh.timestamp_to_date(start_date)
+    formatted_date = ah.timestamp_to_date(start_date)
     if message is None:
         message = f'Missing trading candles for {symbol} on {exchange} from {formatted_date}'
     
@@ -475,8 +475,8 @@ def _handle_missing_candles(exchange: str, symbol: str, start_date: int, message
 
 
 def load_candles(start_date: int, finish_date: int) -> Tuple[dict, dict]:
-    warmup_num = jh.get_config('env.data.warmup_candles_num', 210)
-    max_timeframe = jh.max_timeframe(config['app']['considering_timeframes'])
+    warmup_num = ah.get_config('env.data.warmup_candles_num', 210)
+    max_timeframe = ah.max_timeframe(config['app']['considering_timeframes'])
 
     # load and add required warm-up candles for backtest, and then Prepare trading candles
     trading_candles = {}
@@ -507,13 +507,13 @@ def load_candles(start_date: int, finish_date: int) -> Tuple[dict, dict]:
             _handle_missing_candles(exchange, symbol, start_date)
 
         # add trading candles
-        trading_candles[jh.key(exchange, symbol)] = {
+        trading_candles[ah.key(exchange, symbol)] = {
             'exchange': exchange,
             'symbol': symbol,
             'candles': trading_candle_arr
         }
 
-        warmup_candles[jh.key(exchange, symbol)] = {
+        warmup_candles[ah.key(exchange, symbol)] = {
             'exchange': exchange,
             'symbol': symbol,
             'candles': warmup_candles_arr
@@ -528,21 +528,21 @@ def _handle_warmup_candles(warmup_candles: dict, start_date: str) -> None:
         store.candles.enforce_warmup = True
         for c in config['app']['considering_candles']:
             exchange, symbol = c[0], c[1]
-            candle_array = warmup_candles[jh.key(exchange, symbol)]['candles']
+            candle_array = warmup_candles[ah.key(exchange, symbol)]['candles']
             candle_service.validate_observed_one_minute_candles(candle_array, exchange, symbol)
             candle_service.inject_warmup_candles_to_store(
                 candle_array,
                 exchange,
                 symbol,
-                available_at=jh.date_to_timestamp(start_date),
+                available_at=ah.date_to_timestamp(start_date),
             )
     except ValueError as e:
         # This date is an import suggestion; sparse warmup counts completed observed buckets.
-        warmup_num = jh.get_config('env.data.warmup_candles_num', 210)
-        max_timeframe = jh.max_timeframe(config['app']['considering_timeframes'])
+        warmup_num = ah.get_config('env.data.warmup_candles_num', 210)
+        max_timeframe = ah.max_timeframe(config['app']['considering_timeframes'])
         warmup_minutes = TIMEFRAME_TO_ONE_MINUTES[max_timeframe] * warmup_num
-        warmup_start_timestamp = jh.date_to_timestamp(start_date) - (warmup_minutes * 60_000)
-        warmup_start_date = jh.timestamp_to_date(warmup_start_timestamp)
+        warmup_start_timestamp = ah.date_to_timestamp(start_date) - (warmup_minutes * 60_000)
+        warmup_start_date = ah.timestamp_to_date(warmup_start_timestamp)
         sync_publish(
             "missing_candles",
             {
@@ -598,7 +598,7 @@ def _timestamp_replay_common_start(candles: dict) -> int:
         raise ValueError('At least one observed candle series is required.')
     common_start = max(int(candle_data['candles'][0, 0]) for candle_data in candles.values())
     required_warmup = (
-        jh.get_config('env.data.warmup_candles_num', 0)
+        ah.get_config('env.data.warmup_candles_num', 0)
         if store.candles.enforce_warmup
         else 0
     )
@@ -611,7 +611,7 @@ def _timestamp_replay_common_start(candles: dict) -> int:
         deficit = required_warmup - completed_count
         if deficit <= 0:
             continue
-        key = jh.key(route.exchange, route.symbol)
+        key = ah.key(route.exchange, route.symbol)
         candle_array = candles[key]['candles']
         timeframe_ms = TIMEFRAME_TO_ONE_MINUTES[route.timeframe] * 60_000
         bucket_starts = np.unique(
@@ -628,7 +628,7 @@ def _timestamp_replay_common_start(candles: dict) -> int:
         if not (candle_data['candles'][:, 0] >= common_start).any():
             raise exceptions.CandlesNotFound(
                 f"No trading candle remains for {candle_data['symbol']} on {candle_data['exchange']} "
-                f'after the common warmup boundary {jh.timestamp_to_time(common_start)}.'
+                f'after the common warmup boundary {ah.timestamp_to_time(common_start)}.'
             )
     return common_start
 
@@ -734,7 +734,7 @@ def _prepare_timestamp_replay_warmup(candles: dict, common_start: int) -> None:
             )
 
     required_warmup = (
-        jh.get_config('env.data.warmup_candles_num', 0)
+        ah.get_config('env.data.warmup_candles_num', 0)
         if store.candles.enforce_warmup
         else 0
     )
@@ -750,7 +750,7 @@ def _prepare_timestamp_replay_warmup(candles: dict, common_start: int) -> None:
             raise exceptions.CandlesNotFound(
                 f'Only {completed_count} of {required_warmup} required completed {route.timeframe} '
                 f'warmup candles are available for {route.symbol} on {route.exchange} before '
-                f'{jh.timestamp_to_time(common_start)}.'
+                f'{ah.timestamp_to_time(common_start)}.'
             )
 
 
@@ -1127,8 +1127,8 @@ def _step_simulator(
         (r, TIMEFRAME_TO_ONE_MINUTES[r.timeframe], r.strategy, r.exchange, r.symbol)
         for r in router.routes
     ]
-    print_shorter_period_candles = jh.is_debuggable('shorter_period_candles')
-    print_trading_candles = jh.is_debuggable('trading_candles')
+    print_shorter_period_candles = ah.is_debuggable('shorter_period_candles')
+    print_trading_candles = ah.is_debuggable('trading_candles')
     store_app = store.app
     add_candle = candle_service.add_candle
     generate_candle_from_one_minutes = candle_service.generate_candle_from_one_minutes
@@ -1354,7 +1354,7 @@ def _prepare_routes(
     for r in router.routes:
         # if the r.strategy is str read it from file
         if isinstance(r.strategy_name, str):
-            StrategyClass = jh.get_strategy_class(r.strategy_name)
+            StrategyClass = ah.get_strategy_class(r.strategy_name)
         # else it is a class object so just use it
         else:
             StrategyClass = r.strategy_name
@@ -1381,7 +1381,7 @@ def _prepare_routes(
         # strategy's decoded HP into the next strategy.
         route_hp = hyperparameters
         if route_hp is None and len(r.strategy.dna()) > 0:
-            route_hp = jh.dna_to_hp(
+            route_hp = ah.dna_to_hp(
                 r.strategy.hyperparameters(), r.strategy.dna()
             )
 
@@ -1398,19 +1398,19 @@ def _prepare_routes(
             if candles_pipeline_class is not None:
                 # Use the provided pipeline class with kwargs if available
                 kwargs = candles_pipeline_kwargs or {}
-                candles_pipeline[jh.key(r.exchange, r.symbol)] = candles_pipeline_class(**kwargs)
+                candles_pipeline[ah.key(r.exchange, r.symbol)] = candles_pipeline_class(**kwargs)
             else:
                 # Otherwise, fall back to the strategy's pipeline
-                candles_pipeline[jh.key(r.exchange, r.symbol)] = r.strategy.candles_pipeline()
+                candles_pipeline[ah.key(r.exchange, r.symbol)] = r.strategy.candles_pipeline()
         else: # normal backtest
-            candles_pipeline[jh.key(r.exchange, r.symbol)] = None
+            candles_pipeline[ah.key(r.exchange, r.symbol)] = None
 
         store.positions.get_position(r.exchange, r.symbol).strategy = r.strategy
 
     # Ensure pipelines exist for data routes as well (no strategy attached)
     # Keys in `candles` include both trading and data routes; provide a pipeline (or None) for each
     for dr in getattr(router, 'data_routes', []) or []:
-        key = jh.key(dr.exchange, dr.symbol)
+        key = ah.key(dr.exchange, dr.symbol)
         if key in candles_pipeline:
             continue
         if with_candles_pipeline and candles_pipeline_class is not None:
@@ -1444,7 +1444,7 @@ def _update_progress_bar(
     # Cancellation uses Redis, so cap both polling and progress publication at twice per second.
     # This also works when sparse fast-mode batches jump over exact candle-index boundaries.
     if last_update_time is None or (current_time - last_update_time) >= 0.5:
-        _raise_if_cancelled(jh.get_session_id())
+        _raise_if_cancelled(ah.get_session_id())
         sync_publish(
             "progressbar",
             {
@@ -1765,17 +1765,17 @@ def _check_for_liquidations(
         )
 
     if liquidation_reached:
-        closing_order_side = jh.closing_side(p.type)
+        closing_order_side = ah.closing_side(p.type)
 
         # create the market order that is used as the liquidation order
         order = Order({
-            'id': jh.generate_unique_id(),
+            'id': ah.generate_unique_id(),
             'symbol': symbol,
             'exchange': exchange,
             'side': closing_order_side,
             'type': order_types.MARKET,
             'reduce_only': True,
-            'qty': jh.prepare_qty(p.qty, closing_order_side),
+            'qty': ah.prepare_qty(p.qty, closing_order_side),
             'price': p.bankruptcy_price
         })
 
@@ -1811,7 +1811,7 @@ def _generate_outputs(
     if generate_equity_curve:
         result["equity_curve"] = charts.equity_curve(benchmark)
     if generate_logs:
-        result["logs"] = f"storage/logs/backtest-mode/{jh.get_session_id()}.txt"
+        result["logs"] = f"storage/logs/backtest-mode/{ah.get_session_id()}.txt"
     return result
 
 
@@ -2256,7 +2256,7 @@ def _execute_routes(candle_index: int, candles_step: int) -> None:
             r.strategy._execute()
         elif (candle_index + candles_step) % count == 0:
             # print candle
-            if jh.is_debuggable("trading_candles"):
+            if ah.is_debuggable("trading_candles"):
                 candle_service.print_candle(
                     candle_service.get_current_candle(
                         r.exchange, r.symbol, r.timeframe

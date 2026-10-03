@@ -1,5 +1,5 @@
 import requests
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from typing import Union
 from algorithex import exceptions
@@ -14,7 +14,7 @@ class GateSpotMain(CandleExchange):
         self.endpoint = rest_endpoint
 
     def get_starting_time(self, symbol: str) -> int:
-        symbol = jh.dashy_to_underline(symbol)
+        symbol = ah.dashy_to_underline(symbol)
         payload = {
             'contract': symbol,
             'interval': '1w',
@@ -34,8 +34,8 @@ class GateSpotMain(CandleExchange):
         return int(data[0]['t'])
 
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> Union[list, None]:
-        symbol = jh.dashy_to_underline(symbol)
-        end_timestamp = start_timestamp + (self.limit - 1) * 60000 * jh.timeframe_to_one_minutes(timeframe)
+        symbol = ah.dashy_to_underline(symbol)
+        end_timestamp = start_timestamp + (self.limit - 1) * 60000 * ah.timeframe_to_one_minutes(timeframe)
         interval = timeframe_to_interval(timeframe)
 
         payload = {
@@ -54,9 +54,9 @@ class GateSpotMain(CandleExchange):
         data = []
         for d in response.json():
             data.append({
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
-                'symbol': jh.underline_to_dashy_symbol(symbol),
+                'symbol': ah.underline_to_dashy_symbol(symbol),
                 'timeframe': timeframe,
                 'timestamp': int(d[0]) * 1000,
                 'open': float(d[5]),
@@ -74,6 +74,6 @@ class GateSpotMain(CandleExchange):
         data = response.json()
 
         for p in data:
-            pairs.append(jh.underline_to_dashy_symbol(p['id']))
+            pairs.append(ah.underline_to_dashy_symbol(p['id']))
 
         return pairs

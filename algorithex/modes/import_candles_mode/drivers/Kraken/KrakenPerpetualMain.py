@@ -1,7 +1,7 @@
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from typing import Union
 from algorithex import exceptions
@@ -44,8 +44,8 @@ class KrakenPerpetualMain(CandleExchange):
 
     def _algorithex_to_kraken_symbol(self, symbol: str) -> str:
         # Algorithex 'BTC-USD' -> Kraken Futures 'PF_XBTUSD'
-        base = jh.get_base_asset(symbol)
-        quote = jh.get_quote_asset(symbol)
+        base = ah.get_base_asset(symbol)
+        quote = ah.get_quote_asset(symbol)
         if base == 'BTC':
             base = 'XBT'
         return f'PF_{base}{quote}'
@@ -54,7 +54,7 @@ class KrakenPerpetualMain(CandleExchange):
         k_symbol = self._algorithex_to_kraken_symbol(symbol)
         # probe daily candles from the Kraken Futures launch era to find the oldest available
         url = f'{self.endpoint}/api/charts/v1/trade/{k_symbol}/1d'
-        response = self.session.get(url, params={'from': 1577836800, 'to': jh.now() // 1000}, timeout=10)
+        response = self.session.get(url, params={'from': 1577836800, 'to': ah.now() // 1000}, timeout=10)
         self.validate_response(response)
         candles = response.json().get('candles', [])
         if not candles:
@@ -65,7 +65,7 @@ class KrakenPerpetualMain(CandleExchange):
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> Union[list, None]:
         k_symbol = self._algorithex_to_kraken_symbol(symbol)
         resolution = timeframe_to_futures_resolution(timeframe)
-        one_min = jh.timeframe_to_one_minutes(timeframe)
+        one_min = ah.timeframe_to_one_minutes(timeframe)
         from_sec = int(start_timestamp / 1000)
         to_sec = from_sec + (self.count * one_min * 60)
 
@@ -77,7 +77,7 @@ class KrakenPerpetualMain(CandleExchange):
         # `time` is in MILLISECONDS and is the candle open time -> use as-is. Oldest-first.
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

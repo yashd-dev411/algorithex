@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services import logger as algorithex_logger
 import threading
 import traceback
@@ -11,7 +11,7 @@ from algorithex.enums import live_session_statuses
 
 def _terminal_debug(message: str) -> None:
     try:
-        jh.terminal_debug(message)
+        ah.terminal_debug(message)
     except Exception:
         pass
 
@@ -28,10 +28,10 @@ def register_custom_exception_handler() -> None:
 
         if args.exc_type.__name__ == 'Termination':
             sync_publish('termination', {})
-            jh.terminate_app()
+            ah.terminate_app()
         else:
             # send notifications if it's a live session
-            if jh.is_live():
+            if ah.is_live():
                 try:
                     algorithex_logger.error(
                         f'{args.exc_type.__name__}: {args.exc_value}'
@@ -102,7 +102,7 @@ def terminate_session(error: str = '', traceback_str: str = ''):
         _terminal_debug(f'Error marking crashed backtest session as failed: {type(e).__name__}: {e}')
 
     try:
-        jh.terminate_app()
+        ah.terminate_app()
     except BaseException as e:
         _terminal_debug(f'Error closing resources during session termination: {type(e).__name__}: {e}')
     finally:

@@ -3,7 +3,7 @@ from typing import List, Optional
 import numpy as np
 from peewee import Cast
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.config import config
 from algorithex.enums import order_statuses, sides
 from algorithex.models.ClosedTrade import ClosedTrade
@@ -46,7 +46,7 @@ def populate_order_arrays(trade: ClosedTrade) -> ClosedTrade:
 
 
 def find_by_id(trade_id: str, strict: bool = False) -> Optional[ClosedTrade]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     _ensure_db_open()
@@ -68,7 +68,7 @@ def find_by_session_id(
     limit: Optional[int] = None,
     offset: int = 0,
 ) -> List[ClosedTrade]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     _ensure_db_open()
@@ -97,7 +97,7 @@ def find_by_session_id(
 
 
 def create(trade_data: dict) -> Optional[ClosedTrade]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     _ensure_db_open()
@@ -111,8 +111,8 @@ def create(trade_data: dict) -> Optional[ClosedTrade]:
         "type": trade_data.get("type"),
         "timeframe": trade_data.get("timeframe"),
         "leverage": trade_data.get("leverage"),
-        "created_at": trade_data.get("created_at", jh.now_to_timestamp()),
-        "updated_at": trade_data.get("updated_at", jh.now_to_timestamp()),
+        "created_at": trade_data.get("created_at", ah.now_to_timestamp()),
+        "updated_at": trade_data.get("updated_at", ah.now_to_timestamp()),
         "session_mode": config["app"]["trading_mode"],
         "opened_at": trade_data.get("opened_at"),
     }
@@ -128,18 +128,18 @@ def create(trade_data: dict) -> Optional[ClosedTrade]:
             database.db.rollback()
         except Exception:
             pass
-        jh.dump(f"Error storing closed trade in database: {e}")
+        ah.dump(f"Error storing closed trade in database: {e}")
         raise
 
 
 def update(trade: ClosedTrade) -> None:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     _ensure_db_open()
 
     d = {
-        "updated_at": jh.now_to_timestamp(),
+        "updated_at": ah.now_to_timestamp(),
     }
     
     if trade.closed_at is not None:
@@ -156,12 +156,12 @@ def update(trade: ClosedTrade) -> None:
             database.db.rollback()
         except Exception:
             pass
-        jh.dump(f"Error updating closed trade in database: {e}")
+        ah.dump(f"Error updating closed trade in database: {e}")
         raise
 
 
 def store_or_update(trade: ClosedTrade) -> None:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     _ensure_db_open()
@@ -180,8 +180,8 @@ def store_or_update(trade: ClosedTrade) -> None:
         "type": trade.type,
         "timeframe": trade.timeframe,
         "leverage": trade.leverage,
-        "created_at": trade.created_at if hasattr(trade, "created_at") and trade.created_at else jh.now_to_timestamp(),
-        "updated_at": trade.updated_at if hasattr(trade, "updated_at") and trade.updated_at else jh.now_to_timestamp(),
+        "created_at": trade.created_at if hasattr(trade, "created_at") and trade.created_at else ah.now_to_timestamp(),
+        "updated_at": trade.updated_at if hasattr(trade, "updated_at") and trade.updated_at else ah.now_to_timestamp(),
         "session_mode": config["app"]["trading_mode"],
         "opened_at": trade.opened_at,
     }
@@ -198,11 +198,11 @@ def store_or_update(trade: ClosedTrade) -> None:
             database.db.rollback()
         except Exception:
             pass
-        jh.dump(f"Error storing closed trade in database: {e}")
+        ah.dump(f"Error storing closed trade in database: {e}")
 
 
 def close_trade(trade: ClosedTrade, opened_at: int = None) -> None:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     _ensure_db_open()
@@ -215,8 +215,8 @@ def close_trade(trade: ClosedTrade, opened_at: int = None) -> None:
         return
 
     d = {
-        "closed_at": trade.closed_at if trade.closed_at else jh.now_to_timestamp(),
-        "updated_at": jh.now_to_timestamp(),
+        "closed_at": trade.closed_at if trade.closed_at else ah.now_to_timestamp(),
+        "updated_at": ah.now_to_timestamp(),
     }
     if opened_at:
         d["opened_at"] = opened_at
@@ -227,17 +227,17 @@ def close_trade(trade: ClosedTrade, opened_at: int = None) -> None:
             database.db.rollback()
         except Exception:
             pass
-        jh.dump(f"Error closing trade in database: {e}")
+        ah.dump(f"Error closing trade in database: {e}")
 
 
 def disable_trade(trade_id: str) -> None:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     _ensure_db_open()
 
     d = {
-        "soft_deleted_at": jh.now_to_timestamp(),
+        "soft_deleted_at": ah.now_to_timestamp(),
     }
     ClosedTrade.update(**d).where(ClosedTrade.id == trade_id).execute()
 
@@ -252,7 +252,7 @@ def find_by_filters(
     limit: int = 50,
     offset: int = 0
 ) -> List[ClosedTrade]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     _ensure_db_open()
@@ -289,7 +289,7 @@ def find_by_filters(
         query = query.where(ClosedTrade.type.contains(type_filter))
 
     if date_filter:
-        cutoff_timestamp = jh.now_to_timestamp()
+        cutoff_timestamp = ah.now_to_timestamp()
         if date_filter == '7_days':
             cutoff_timestamp -= 7 * 24 * 60 * 60 * 1000
         elif date_filter == '30_days':
@@ -317,7 +317,7 @@ def find_by_filters(
 
 
 def get_open_trade(exchange_name: str, symbol: str, is_initial: bool = False) -> Optional[ClosedTrade]:
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return None
 
     _ensure_db_open()

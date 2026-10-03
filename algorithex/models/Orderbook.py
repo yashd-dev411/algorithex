@@ -1,5 +1,5 @@
 import peewee
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import numpy as np
 
 
@@ -35,8 +35,8 @@ class Orderbook(peewee.Model):
 def store_orderbook_into_db(exchange: str, symbol: str, orderbook: np.ndarray) -> None:
     return
     d = {
-        'id': jh.generate_unique_id(),
-        'timestamp': jh.now_to_timestamp(),
+        'id': ah.generate_unique_id(),
+        'timestamp': ah.now_to_timestamp(),
         'data': orderbook.dumps(),
         'symbol': symbol,
         'exchange': exchange,
@@ -45,8 +45,8 @@ def store_orderbook_into_db(exchange: str, symbol: str, orderbook: np.ndarray) -
     def async_save() -> None:
         Orderbook.insert(**d).on_conflict_ignore().execute()
         print(
-            jh.color(
-                f'orderbook: {jh.timestamp_to_time(d["timestamp"])}-{exchange}-{symbol}: [{orderbook[0][0][0]}, {orderbook[0][0][1]}], [{orderbook[1][0][0]}, {orderbook[1][0][1]}]',
+            ah.color(
+                f'orderbook: {ah.timestamp_to_time(d["timestamp"])}-{exchange}-{symbol}: [{orderbook[0][0][0]}, {orderbook[0][0][1]}], [{orderbook[1][0][0]}, {orderbook[1][0][1]}]',
                 'magenta'
             )
         )

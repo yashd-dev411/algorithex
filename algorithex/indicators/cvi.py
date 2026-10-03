@@ -1,6 +1,6 @@
 from typing import Literal, Union, overload
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex._native import cvi as cvi_rust
 
 
@@ -21,9 +21,9 @@ def cvi(candles: np.ndarray, period: int = 5, sequential: bool = False) -> Union
 
     :return: float | np.ndarray
     """
-    candles = jh.slice_candles(candles, sequential)
+    candles = ah.slice_candles(candles, sequential)
     
     # Call the Rust implementation
     res = cvi_rust(candles, period)
 
-    return jh.same_length(candles, res) if sequential else res[-1]
+    return ah.same_length(candles, res) if sequential else res[-1]

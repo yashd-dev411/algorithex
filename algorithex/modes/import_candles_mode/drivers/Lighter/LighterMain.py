@@ -2,7 +2,7 @@ from typing import Union
 
 import requests
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from .lighter_utils import timeframe_to_resolution
 
@@ -34,7 +34,7 @@ class LighterMain(CandleExchange):
     def _market_id(self, symbol: str) -> int:
         if not self._market_ids:
             self.get_available_symbols()
-        base = jh.get_base_asset(symbol)
+        base = ah.get_base_asset(symbol)
         dashy = base + '-USD'
         if dashy not in self._market_ids:
             raise ValueError(f'Symbol "{symbol}" is not listed on {self.name}')
@@ -59,7 +59,7 @@ class LighterMain(CandleExchange):
         market_id = self._market_id(symbol)
         # Lighter only keeps ~130 days of history; probe from 200 days ago and return the
         # timestamp of the oldest 1m candle it actually serves.
-        end = jh.now(force_fresh=True)
+        end = ah.now(force_fresh=True)
         start = end - (200 * 24 * 60 * 60 * 1000)
         params = {
             'market_id': market_id,
@@ -79,7 +79,7 @@ class LighterMain(CandleExchange):
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> Union[list, None]:
         market_id = self._market_id(symbol)
         resolution = timeframe_to_resolution(timeframe)
-        interval_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+        interval_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
         # request exactly one page (`count` candles) forward from start_timestamp
         end_timestamp = start_timestamp + (self.count - 1) * interval_ms
 
@@ -98,7 +98,7 @@ class LighterMain(CandleExchange):
         # interval (set_timestamp_to_end defaults to false) — no reversal or offset needed.
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

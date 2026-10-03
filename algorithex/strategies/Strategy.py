@@ -5,7 +5,7 @@ import os
 import csv
 import numpy as np
 import sys
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.services.logger as logger
 from algorithex import exceptions
 from algorithex.enums import sides, order_submitted_via, order_types
@@ -53,7 +53,7 @@ class Strategy(ABC):
     """
 
     def __init__(self) -> None:
-        self.id = jh.generate_unique_id()
+        self.id = ah.generate_unique_id()
         # these are set by the router/engine right after instantiation, hence
         # they are declared with their post-initiation types for type checkers
         self.name: str = None  # type: ignore
@@ -161,7 +161,7 @@ class Strategy(ABC):
             self._ml_data_points.append(self._current_ml_point)
             self._current_ml_point = None
         else:
-            jh.debug(f"record_label('{name}') called with no open data point — did you forget to call record_features() first?")
+            ah.debug(f"record_label('{name}') called with no open data point — did you forget to call record_features() first?")
 
     def export_ml_data(self, directory: str | None = None) -> bool:
         """
@@ -178,7 +178,7 @@ class Strategy(ABC):
                     module = sys.modules[self.__class__.__module__]
                     directory = os.path.dirname(os.path.abspath(module.__file__))
                 except Exception as e:
-                    jh.debug(f"Could not determine strategy path, using cwd: {e}")
+                    ah.debug(f"Could not determine strategy path, using cwd: {e}")
                     directory = os.getcwd()
 
             # Create ml_data subdirectory
@@ -186,7 +186,7 @@ class Strategy(ABC):
                 ml_dir = os.path.join(directory, "ml_data")
                 os.makedirs(ml_dir, exist_ok=True)
             except Exception as e:
-                jh.debug(f"Failed to create ml_data directory: {e}")
+                ah.debug(f"Failed to create ml_data directory: {e}")
                 return False
 
             # Export data points
@@ -224,13 +224,13 @@ class Strategy(ABC):
                             writer.writerow(row)
 
                 except Exception as e:
-                    jh.debug(f"Failed to export ML data: {e}")
+                    ah.debug(f"Failed to export ML data: {e}")
                     return False
 
             return True
 
         except Exception as e:
-            jh.debug(f"Unexpected error during ML data export: {e}")
+            ah.debug(f"Unexpected error during ML data export: {e}")
             return False
 
     def _load_ml_artifacts(self) -> None:
@@ -571,30 +571,30 @@ class Strategy(ABC):
         # call the relevant strategy event handler:
         if effect == 'opening_position':
             txt = f"OPENED {self.position.type} position for {self.symbol}: qty: {after_qty}, entry_price: {self.position.entry_price}"
-            if jh.is_debuggable('position_opened'):
+            if ah.is_debuggable('position_opened'):
                 logger.info(txt)
-            if jh.is_live() and jh.get_config('env.notifications.events.updated_position'):
+            if ah.is_live() and ah.get_config('env.notifications.events.updated_position'):
                 notifier.notify(txt)
             self._on_open_position(order)
         elif effect == 'closing_position':
             txt = f"CLOSED Position for {self.symbol}"
-            if jh.is_debuggable('position_closed'):
+            if ah.is_debuggable('position_closed'):
                 logger.info(txt)
-            if jh.is_live() and jh.get_config('env.notifications.events.updated_position'):
+            if ah.is_live() and ah.get_config('env.notifications.events.updated_position'):
                 notifier.notify(txt)
             self._on_close_position(order)
         elif effect == 'increased_position':
             txt = f"INCREASED Position size to {after_qty}"
-            if jh.is_debuggable('position_increased'):
+            if ah.is_debuggable('position_increased'):
                 logger.info(txt)
-            if jh.is_live() and jh.get_config('env.notifications.events.updated_position'):
+            if ah.is_live() and ah.get_config('env.notifications.events.updated_position'):
                 notifier.notify(txt)
             self._on_increased_position(order)
         else:  # if effect == 'reduced_position':
             txt = f"REDUCED Position size to {after_qty}"
-            if jh.is_debuggable('position_reduced'):
+            if ah.is_debuggable('position_reduced'):
                 logger.info(txt)
-            if jh.is_live() and jh.get_config('env.notifications.events.updated_position'):
+            if ah.is_live() and ah.get_config('env.notifications.events.updated_position'):
                 notifier.notify(txt)
             self._on_reduced_position(order)
 
@@ -663,8 +663,8 @@ class Strategy(ABC):
         self._submit_buy_orders()
 
     def _submit_buy_orders(self) -> None:
-        if jh.is_livetrading():
-            price_to_compare = jh.round_price_for_live_mode(
+        if ah.is_livetrading():
+            price_to_compare = ah.round_price_for_live_mode(
                 self.price,
                 store.exchanges.get_exchange(self.exchange).vars['precisions'][self.symbol]['price_precision']
             )
@@ -673,7 +673,7 @@ class Strategy(ABC):
 
         for o in self._buy:
             # MARKET order
-            if jh.is_price_near(o[1], price_to_compare):
+            if ah.is_price_near(o[1], price_to_compare):
                 self.broker.buy_at_market(o[0])
             # STOP order
             elif o[1] > price_to_compare:
@@ -685,8 +685,8 @@ class Strategy(ABC):
                 raise ValueError(f'Invalid order price: o[1]:{o[1]}, self.price:{self.price}')
 
     def _submit_sell_orders(self) -> None:
-        if jh.is_livetrading():
-            price_to_compare = jh.round_price_for_live_mode(
+        if ah.is_livetrading():
+            price_to_compare = ah.round_price_for_live_mode(
                 self.price,
                 store.exchanges.get_exchange(self.exchange).vars['precisions'][self.symbol]['price_precision']
             )
@@ -695,7 +695,7 @@ class Strategy(ABC):
 
         for o in self._sell:
             # MARKET order
-            if jh.is_price_near(o[1], price_to_compare):
+            if ah.is_price_near(o[1], price_to_compare):
                 self.broker.sell_at_market(o[0])
             # STOP order
             elif o[1] < price_to_compare:
@@ -846,7 +846,7 @@ class Strategy(ABC):
 
         self.on_cancel()
 
-        if not jh.is_unit_testing() and not jh.is_live():
+        if not ah.is_unit_testing() and not ah.is_live():
             store.orders.storage[f'{self.exchange}-{self.symbol}'].clear()
 
     def _reset(self) -> None:
@@ -1079,7 +1079,7 @@ class Strategy(ABC):
 
         self._wait_until_executing_orders_are_fully_handled()
 
-        if jh.is_live() and jh.is_debuggable('strategy_execution'):
+        if ah.is_live() and ah.is_debuggable('strategy_execution'):
             logger.info(f'Executing  {self.name}-{self.exchange}-{self.symbol}-{self.timeframe}')
 
         # should cancel entry?
@@ -1087,7 +1087,7 @@ class Strategy(ABC):
             self._execute_cancel()
 
             # make sure order cancellation response is received via WS
-            if jh.is_live():
+            if ah.is_live():
                 # sleep a little until cancel is received via WS
                 sleep(0.1)
                 # just in case, sleep some more if necessary
@@ -1109,11 +1109,11 @@ class Strategy(ABC):
             self._update_position()
 
             # sleep for 1 second if a MARKET order has been submitted but not executed yet (live trading only)
-            if jh.is_livetrading():
+            if ah.is_livetrading():
                 waiting_counter = 0
                 waiting_seconds = 1
                 while self._have_any_pending_market_exit_orders():
-                    if jh.is_debugging():
+                    if ah.is_debugging():
                         logger.info(f'Waiting {waiting_seconds} second for pending market exit orders to be handled...')
                     waiting_counter += 1
                     if waiting_counter > 22:
@@ -1157,7 +1157,7 @@ class Strategy(ABC):
         """
         Simulate market order execution in backtest mode
         """
-        if jh.is_backtesting() or jh.is_unit_testing() or jh.is_paper_trading():
+        if ah.is_backtesting() or ah.is_unit_testing() or ah.is_paper_trading():
             if not store.orders.to_execute:
                 return
 
@@ -1165,7 +1165,7 @@ class Strategy(ABC):
                 order_service.execute_order(o)
                 
                 # Update order in database for paper trading
-                if jh.is_paper_trading():
+                if ah.is_paper_trading():
                     order_repository.store_or_update(o)
 
             store.orders.to_execute = []
@@ -1389,7 +1389,7 @@ class Strategy(ABC):
         This block will not execute in live use as a live
         Algorithex is never ending.
         """
-        if not jh.should_execute_silently() or jh.is_debugging():
+        if not ah.should_execute_silently() or ah.is_debugging():
             logger.info(f"Terminating {self.symbol}...")
 
         self.before_terminate()
@@ -1397,13 +1397,13 @@ class Strategy(ABC):
         self._detect_and_handle_entry_and_exit_modifications()
 
         # fake execution of market orders in backtest simulation
-        if not jh.is_live():
+        if not ah.is_live():
             if store.orders.to_execute:
                 for o in store.orders.to_execute:
                     order_service.execute_order(o)
                 store.orders.to_execute = []
 
-        if jh.is_live():
+        if ah.is_live():
             self.terminate()
             return
 
@@ -1632,9 +1632,9 @@ class Strategy(ABC):
 
         # validate that the price (second column) is not less or equal to zero
         if arr[:, 1].min() <= 0:
-            raise exceptions.InvalidStrategy(f'Order price must be greater than zero: \nSubmitted order: {var}\nCurrent price: {self.price}\nCurrent time: {jh.timestamp_to_time(self.time)}')
+            raise exceptions.InvalidStrategy(f'Order price must be greater than zero: \nSubmitted order: {var}\nCurrent price: {self.price}\nCurrent time: {ah.timestamp_to_time(self.time)}')
 
-        if jh.is_livetrading() and round_for_live_mode:
+        if ah.is_livetrading() and round_for_live_mode:
             # in livetrade mode, we'll need them rounded
             current_exchange = store.exchanges.get_exchange(self.exchange)
 
@@ -1645,8 +1645,8 @@ class Strategy(ABC):
             price_precision = current_exchange.vars['precisions'][self.symbol]['price_precision']
             qty_precision = current_exchange.vars['precisions'][self.symbol]['qty_precision']
 
-            prices = jh.round_price_for_live_mode(arr[:, 1], price_precision)
-            qtys = jh.round_qty_for_live_mode(arr[:, 0], qty_precision)
+            prices = ah.round_price_for_live_mode(arr[:, 1], price_precision)
+            qtys = ah.round_qty_for_live_mode(arr[:, 0], qty_precision)
 
             arr[:, 0] = qtys
             arr[:, 1] = prices
@@ -1761,9 +1761,9 @@ class Strategy(ABC):
         msg = str(msg)
 
         if log_type == 'info':
-            logger.info(msg, send_notification=jh.is_live() and send_notification, webhook=webhook)
+            logger.info(msg, send_notification=ah.is_live() and send_notification, webhook=webhook)
         elif log_type == 'error':
-            logger.error(msg, send_notification=jh.is_live() and send_notification)
+            logger.error(msg, send_notification=ah.is_live() and send_notification)
         else:
             raise ValueError(f'log_type should be either "info" or "error". You passed {log_type}')
 
@@ -1853,19 +1853,19 @@ class Strategy(ABC):
 
     @property
     def is_backtesting(self) -> bool:
-        return jh.is_backtesting()
+        return ah.is_backtesting()
 
     @property
     def is_livetrading(self) -> bool:
-        return jh.is_livetrading()
+        return ah.is_livetrading()
 
     @property
     def is_papertrading(self) -> bool:
-        return jh.is_paper_trading()
+        return ah.is_paper_trading()
 
     @property
     def is_live(self) -> bool:
-        return jh.is_live()
+        return ah.is_live()
 
     @property
     def is_trading_hours(self) -> bool:
@@ -1878,7 +1878,7 @@ class Strategy(ABC):
 
     @property
     def min_qty(self) -> float:
-        if not jh.is_live():
+        if not ah.is_live():
             raise ValueError('self.min_qty is only available in live modes')
 
         try:
@@ -1888,8 +1888,8 @@ class Strategy(ABC):
 
     @property
     def base_asset(self) -> str:
-        return jh.base_asset(self.symbol)
+        return ah.base_asset(self.symbol)
 
     @property
     def quote_asset(self) -> str:
-        return jh.quote_asset(self.symbol)
+        return ah.quote_asset(self.symbol)

@@ -1,5 +1,5 @@
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from .base_candles import BaseCandlesPipeline
 
 

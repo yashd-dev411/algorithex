@@ -1,5 +1,5 @@
 import requests
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from algorithex.enums import exchanges
 from .coinbase_utils import timeframe_to_interval
@@ -38,7 +38,7 @@ class CoinbaseSpot(CandleExchange):
         note1: unlike Bitfinex, Binance does NOT skip candles with volume=0.
         note2: like Bitfinex, start_time includes the candle and so does the end_time.
         """
-        end_timestamp = start_timestamp + (self.count - 1) * 60000 * jh.timeframe_to_one_minutes(timeframe)
+        end_timestamp = start_timestamp + (self.count - 1) * 60000 * ah.timeframe_to_one_minutes(timeframe)
 
         payload = {
             'granularity': timeframe_to_interval(timeframe),
@@ -57,7 +57,7 @@ class CoinbaseSpot(CandleExchange):
         data = data[::-1]
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

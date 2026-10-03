@@ -1,6 +1,6 @@
 from typing import Optional, List
 import math
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models.LiveEquitySnapshot import LiveEquitySnapshot
 from algorithex.services.db import database
 
@@ -15,7 +15,7 @@ def upsert_snapshot(session_id: str, timestamp: int, currency: str, equity: floa
     Insert or update a single equity snapshot for the given session and minute bucket.
     Uses ON CONFLICT to ensure only one row per (session_id, timestamp).
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return
 
     _ensure_db_open()
@@ -89,7 +89,7 @@ def query_equity_curve(
     
     Uses DISTINCT ON to return the last value per bucket.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return {'currency': 'USD', 'data': []}
 
     _ensure_db_open()
@@ -98,9 +98,9 @@ def query_equity_curve(
     if from_ms is None:
         from_ms = 0
     if to_ms is None:
-        # IMPORTANT: in API/server context jh.now() can return store.app.time (stale).
+        # IMPORTANT: in API/server context ah.now() can return store.app.time (stale).
         # We need a fresh wall-clock timestamp for querying DB time-series.
-        to_ms = jh.now(True)
+        to_ms = ah.now(True)
 
     step_ms = _choose_step_ms(from_ms, to_ms, timeframe, max_points)
 
@@ -171,7 +171,7 @@ def get_session_equity_count(session_id: str) -> int:
     Get the total number of equity snapshots for a session.
     Useful for debugging/monitoring.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return 0
 
     _ensure_db_open()

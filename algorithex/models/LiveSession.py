@@ -1,7 +1,7 @@
 import peewee
 import json
 from algorithex.services.db import database
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 if database.is_closed():
@@ -67,7 +67,7 @@ class LiveSession(peewee.Model):
         if isinstance(s, dict) and 'form' in s and isinstance(s['form'], dict):
             for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
                 if key in s['form']:
-                    s['form'][key] = jh.normalize_bool(s['form'].get(key))
+                    s['form'][key] = ah.normalize_bool(s['form'].get(key))
         return s
     
     @state_json.setter
@@ -103,7 +103,7 @@ class LiveSession(peewee.Model):
             return self.finished_at - self.created_at
         else:
             # For running sessions, calculate duration up to now
-            return jh.now_to_timestamp(True) - self.created_at
+            return ah.now_to_timestamp(True) - self.created_at
 
 
 # if database is open, create the table

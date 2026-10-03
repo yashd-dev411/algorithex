@@ -6,7 +6,7 @@ from functools import lru_cache
 from hashlib import sha256
 
 import requests
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.info import exchange_info, algorithex_supported_timeframes, ALGORITHEX_API_URL, ALGORITHEX_API2_URL
 from algorithex.services.env import ENV_VALUES, is_dev_env
 
@@ -54,7 +54,7 @@ def _get_plan_info(access_token: str | None) -> tuple[dict, dict]:
         plan_info = response.json()
         return plan_info, plan_info['limits']
     except requests.exceptions.RequestException as e:
-        jh.debug(f"Algorithex local mode: plan backend unreachable, using premium ({str(e)})")
+        ah.debug(f"Algorithex local mode: plan backend unreachable, using premium ({str(e)})")
         return {'plan': 'premium'}, {
             'ip_limit': -1,
             'live_trading_tabs': -1,
@@ -64,7 +64,7 @@ def _get_plan_info(access_token: str | None) -> tuple[dict, dict]:
             'exchanges': {},
         }
     except ValueError as e:
-        jh.debug(f"Algorithex local mode: invalid plan response, using premium ({str(e)})")
+        ah.debug(f"Algorithex local mode: invalid plan response, using premium ({str(e)})")
         return {'plan': 'premium'}, {
             'ip_limit': -1,
             'live_trading_tabs': -1,
@@ -104,7 +104,7 @@ def _get_update_info(_cache_bucket: int) -> dict:
         update_info['is_update_info_available'] = True
     except Exception as e:
         update_info['is_update_info_available'] = False
-        jh.debug(f"Failed to fetch update info: {str(e)}")
+        ah.debug(f"Failed to fetch update info: {str(e)}")
 
     return update_info
 
@@ -154,10 +154,10 @@ def get_local_general_info(has_live=False) -> dict:
 
     system_info = {
         'algorithex_version': algorithex_version,
-        'python_version': '{}.{}'.format(*jh.python_version()),
-        'operating_system': jh.get_os(),
-        'cpu_cores': jh.cpu_cores_count(),
-        'is_docker': jh.is_docker(),
+        'python_version': '{}.{}'.format(*ah.python_version()),
+        'operating_system': ah.get_os(),
+        'cpu_cores': ah.cpu_cores_count(),
+        'is_docker': ah.is_docker(),
     }
     if access_token and live_version:
         system_info['live_plugin_version'] = live_version
@@ -209,7 +209,7 @@ def get_external_general_info(has_live=False) -> dict:
             update_info = update_future.result().copy()
     except Exception as e:
         # Algorithex white-label: never fail the dashboard when offline.
-        jh.debug(f"Algorithex local mode: external info unavailable, using premium ({str(e)})")
+        ah.debug(f"Algorithex local mode: external info unavailable, using premium ({str(e)})")
         plan_info, limits = {'plan': 'premium'}, {}
         update_info = {'is_update_info_available': False}
 

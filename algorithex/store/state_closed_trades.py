@@ -1,5 +1,5 @@
 from algorithex.models import ClosedTrade
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 class ClosedTrades:
@@ -8,22 +8,22 @@ class ClosedTrades:
         self.tempt_trades = {}
 
     def _get_current_trade(self, exchange: str, symbol: str) -> ClosedTrade:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         # if already exists, return it
         if key in self.tempt_trades:
             t: ClosedTrade = self.tempt_trades[key]
             # set the trade.id if not generated already
             if not t.id:
-                t.id = jh.generate_unique_id()
+                t.id = ah.generate_unique_id()
             return t
         # else, create a new trade, store it, and return it
         t = ClosedTrade()
-        t.id = jh.generate_unique_id()
+        t.id = ah.generate_unique_id()
         self.tempt_trades[key] = t
         return t
 
     def _reset_current_trade(self, exchange: str, symbol: str) -> None:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         self.tempt_trades[key] = ClosedTrade()
 
     @property

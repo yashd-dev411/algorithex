@@ -5,7 +5,7 @@ import click
 from importlib.metadata import version as get_version
 import uvicorn
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.multiprocessing import process_manager
 from algorithex.services.web import fastapi_app
 
@@ -36,7 +36,99 @@ def install_live(strict: bool) -> None:
     """Install and configure the live trading plugin."""
     from algorithex.services.installer import install
 
-    install(is_live_plugin_already_installed=jh.has_live_trade_plugin(), strict=strict)
+    install(is_live_plugin_already_installed=ah.has_live_trade_plugin(), strict=strict)
+
+
+def _load_close_prices(path: str):
+    """
+    Read a close-price column out of a CSV, tolerating the usual header names.
+
+    Kept dependency-free on purpose: a certification report should not need the
+    database or the engine to run, only a file.
+    """
+    import csv
+
+    with open(path, newline='', encoding='utf-8-sig') as handle:
+        rows = list(csv.reader(handle))
+    if not rows:
+        raise ValueError(f'{path} is empty')
+
+    header = [cell.strip().lower() for cell in rows[0]]
+    index = next(
+        (i for i, name in enumerate(header) if name in ('close', 'price', 'adj close')),
+        None,
+    )
+    values = []
+    for row in rows[1:] if index is not None else rows:
+        cell = row[index] if index is not None and index < len(row) else row[-1]
+        try:
+            values.append(float(cell))
+        except (TypeError, ValueError):
+            continue
+
+    if len(values) < 3:
+        raise ValueError(
+            f'{path} yielded only {len(values)} usable prices; need at least 3'
+        )
+    import numpy as np
+
+    return np.asarray(values, dtype=np.float64)
+
+
+@cli.command()
+@click.option(
+    '--strategy',
+    'strategy_path',
+    required=True,
+    type=click.Path(exists=True, dir_okay=False),
+    help='Strategy source file to audit.',
+)
+@click.option(
+    '--prices',
+    'prices_path',
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help='CSV of close prices. Without it only the static source checks can run.',
+)
+@click.option(
+    '--name',
+    'strategy_name',
+    default=None,
+    help='Name to show in the report. Defaults to the strategy filename.',
+)
+def certify(strategy_path: str, prices_path, strategy_name) -> None:
+    """
+    Grade a strategy before you risk money on it.
+
+    Runs the look-ahead audit on the source, and — when a price series is
+    supplied — the adversarial robustness and cost-survival checks. Checks with
+    no input are reported as NOT RUN and counted against the grade, so a
+    partial report never reads like a clean one.
+    """
+    from algorithex.research.certification import certify as run_certification
+
+    prices = None
+    if prices_path:
+        try:
+            prices = _load_close_prices(prices_path)
+        except (OSError, ValueError) as exc:
+            raise click.ClickException(f'could not read prices: {exc}')
+
+    report = run_certification(
+        strategy_name=strategy_name or strategy_path,
+        source_path=strategy_path,
+        prices=prices,
+    )
+    click.echo(report.render())
+    if not report.deployable:
+        click.echo(
+            click.style(
+                'Not certified. Checks that were not run are listed above; '
+                'supplying that evidence is the next step.',
+                fg='yellow',
+            )
+        )
+        raise SystemExit(1)
 
 
 @cli.command()
@@ -74,7 +166,7 @@ def run(skip_agent_rules: bool, skip_lsp: bool) -> None:
         + click.style(f"v{version}", fg="yellow", bold=True)
     )
 
-    if jh.has_live_trade_plugin():
+    if ah.has_live_trade_plugin():
         try:
             from algorithex_live.version import __version__ as live_version
             version_line += (
@@ -87,7 +179,7 @@ def run(skip_agent_rules: bool, skip_lsp: bool) -> None:
 
     print(version_line)
 
-    jh.validate_cwd()
+    ah.validate_cwd()
 
     print("")
 
@@ -123,7 +215,7 @@ def run(skip_agent_rules: bool, skip_lsp: bool) -> None:
 
             skip_lsp = not install_lsp_server(allow_skip=True)
         except Exception as e:
-            print(jh.color(f"Error installing Python Language Server: {str(e)}", "red"))
+            print(ah.color(f"Error installing Python Language Server: {str(e)}", "red"))
             pass
 
     # read port from .env file and update the global variables port and host, if not found, use default
@@ -145,7 +237,7 @@ def run(skip_agent_rules: bool, skip_lsp: bool) -> None:
 
             run_lsp_server()
         except Exception as e:
-            print(jh.color(f"Error running Python Language Server: {str(e)}", "red"))
+            print(ah.color(f"Error running Python Language Server: {str(e)}", "red"))
             pass
     
     # print dashboard box and suppress uvicorn's own "running on" line
@@ -167,7 +259,7 @@ def run(skip_agent_rules: bool, skip_lsp: bool) -> None:
 
             run_mcp_server(algorithex_host=HOST, algorithex_port=PORT)
         except Exception as e:
-            print(jh.color(f"Error running MCP Server: {str(e)}", "red"))
+            print(ah.color(f"Error running MCP Server: {str(e)}", "red"))
             pass
 
     # run the main application

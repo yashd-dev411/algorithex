@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 import ray
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.services.logger as logger
 
 # =============================================================================
@@ -42,7 +42,7 @@ ALPHA_1_PERCENT = 0.01
 def _setup_progress_bar(progress_bar: bool, total_scenarios: int, description: str):
     if not progress_bar:
         return None
-    if jh.is_notebook():
+    if ah.is_notebook():
         from tqdm.notebook import tqdm
     else:
         from tqdm import tqdm
@@ -55,14 +55,14 @@ def _safe_log_message(message: str, pbar, is_error: bool = False) -> None:
         formatted_message = f"{'='*80}\n🚨 ERROR: {message}\n{'='*80}"
     
     if pbar:
-        if jh.is_notebook():
+        if ah.is_notebook():
             print(formatted_message)
         else:
             from tqdm import tqdm
             tqdm.write(formatted_message)
     
-    if jh.app_mode() == 'monte-carlo':
-        logger.log_monte_carlo(message if not is_error else f"ERROR: {message}", session_id=jh.get_session_id())
+    if ah.app_mode() == 'monte-carlo':
+        logger.log_monte_carlo(message if not is_error else f"ERROR: {message}", session_id=ah.get_session_id())
 
 
 def _process_scenario_results(

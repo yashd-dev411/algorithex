@@ -37,8 +37,8 @@ def _setup_progress_bar(enabled: bool, total: int, description: str):
     if not enabled:
         return None
     try:
-        import algorithex.helpers as jh
-        if jh.is_notebook():
+        import algorithex.helpers as ah
+        if ah.is_notebook():
             from tqdm.notebook import tqdm
         else:
             from tqdm import tqdm

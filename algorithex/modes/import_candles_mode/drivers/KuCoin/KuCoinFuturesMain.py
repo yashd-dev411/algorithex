@@ -4,7 +4,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import exceptions
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from .kucoin_utils import timeframe_to_futures_granularity, algorithex_symbol_to_futures_contract
@@ -76,7 +76,7 @@ class KuCoinFuturesMain(CandleExchange):
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> list:
         contract = algorithex_symbol_to_futures_contract(symbol)
         granularity = timeframe_to_futures_granularity(timeframe)
-        interval_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+        interval_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
         start_ms = int(start_timestamp)
         # request exactly `count` candles forward from start: [start, start + count*interval)
         end_ms = start_ms + self.count * interval_ms
@@ -91,7 +91,7 @@ class KuCoinFuturesMain(CandleExchange):
 
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

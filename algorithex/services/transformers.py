@@ -12,7 +12,7 @@ from algorithex.repositories import order_repository, live_session_repository
 from algorithex.services.multiprocessing import process_manager
 import json
 import os
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 def get_exchange_api_key(exchange_api_key: ExchangeApiKeys) -> dict:
@@ -95,7 +95,7 @@ def get_optimization_session(session: OptimizationSession) -> dict:
 
 
 def get_optimization_session_for_load_more(session: OptimizationSession) -> dict:
-    objective_function_config = jh.get_config('env.optimization.objective_function', 'sharpe').lower()
+    objective_function_config = ah.get_config('env.optimization.objective_function', 'sharpe').lower()
     mapping = {
         'sharpe': 'sharpe_ratio',
         'calmar': 'calmar_ratio',
@@ -193,7 +193,7 @@ def get_backtest_session(session: BacktestSession) -> dict:
         'strategy_codes': session.strategy_codes_json
     }
 
-    return jh.clean_nan_values(jh.clean_infinite_values(result))
+    return ah.clean_nan_values(ah.clean_infinite_values(result))
 
 
 def get_backtest_session_for_load_more(session: BacktestSession) -> dict:
@@ -201,10 +201,10 @@ def get_backtest_session_for_load_more(session: BacktestSession) -> dict:
     Transform a BacktestSession model instance with full data for detailed view
     """
     # Parse JSON fields and clean infinite values
-    metrics = jh.clean_infinite_values(json.loads(session.metrics)) if session.metrics else None
-    equity_curve = jh.clean_infinite_values(json.loads(session.equity_curve)) if session.equity_curve else []
-    trades = jh.clean_infinite_values(json.loads(session.trades)) if session.trades else []
-    hyperparameters = jh.clean_infinite_values(json.loads(session.hyperparameters)) if session.hyperparameters else None
+    metrics = ah.clean_infinite_values(json.loads(session.metrics)) if session.metrics else None
+    equity_curve = ah.clean_infinite_values(json.loads(session.equity_curve)) if session.equity_curve else []
+    trades = ah.clean_infinite_values(json.loads(session.trades)) if session.trades else []
+    hyperparameters = ah.clean_infinite_values(json.loads(session.hyperparameters)) if session.hyperparameters else None
 
     # Check if chart images exist for this session (probe the equity_curve image as sentinel)
     charts_folder = os.path.abspath('storage/backtest-charts')
@@ -231,7 +231,7 @@ def get_backtest_session_for_load_more(session: BacktestSession) -> dict:
         'strategy_codes': session.strategy_codes_json
     }
 
-    return jh.clean_nan_values(jh.clean_infinite_values(result))
+    return ah.clean_nan_values(ah.clean_infinite_values(result))
 
 
 def get_live_session(session: LiveSession) -> dict:
@@ -254,9 +254,9 @@ def get_live_session(session: LiveSession) -> dict:
             live_session_repository.update_live_session_status(str(session.id), live_session_statuses.STOPPED)
             if not session.finished_at:
                 from algorithex.models.LiveSession import LiveSession
-                LiveSession.update(finished_at=jh.now_to_timestamp(True)).where(LiveSession.id == session.id).execute()
+                LiveSession.update(finished_at=ah.now_to_timestamp(True)).where(LiveSession.id == session.id).execute()
         except Exception as e:
-            jh.debug(f"Error reconciling live session status: {str(e)}")
+            ah.debug(f"Error reconciling live session status: {str(e)}")
 
     result = {
         'id': str(session.id),
@@ -275,7 +275,7 @@ def get_live_session(session: LiveSession) -> dict:
         'traceback': session.traceback
     }
 
-    return jh.clean_nan_values(jh.clean_infinite_values(result))
+    return ah.clean_nan_values(ah.clean_infinite_values(result))
 
 
 def get_monte_carlo_session(session: MonteCarloSession) -> dict:
@@ -428,11 +428,11 @@ def get_monte_carlo_session_for_load_more(session: MonteCarloSession) -> dict:
             'summary_metrics': _extract_candles_summary_metrics(candles_session.results) if candles_session.results else [],
         }
         # Sanitize nested NaN/Inf across entire candles_data structure
-        candles_data = jh.clean_nan_values(candles_data)
+        candles_data = ah.clean_nan_values(candles_data)
 
     # Sanitize trades_data as well for completeness
     if trades_data is not None:
-        trades_data = jh.clean_nan_values(trades_data)
+        trades_data = ah.clean_nan_values(trades_data)
 
     return {
         'id': str(session.id),
@@ -466,7 +466,7 @@ def get_closed_trade_for_list(trade) -> dict:
         'status': 'closed' if trade.closed_at else 'open'
     }
     
-    return jh.clean_nan_values(jh.clean_infinite_values(result))
+    return ah.clean_nan_values(ah.clean_infinite_values(result))
 
 
 def get_closed_trade_details(trade) -> dict:
@@ -489,7 +489,7 @@ def get_closed_trade_details(trade) -> dict:
         'opened_at': trade.opened_at,
         'closed_at': trade.closed_at,
         'status': 'closed' if trade.closed_at else 'open',
-        'strategy_name': jh.get_class_name(trade.strategy_name),
+        'strategy_name': ah.get_class_name(trade.strategy_name),
         'exchange': trade.exchange,
         'timeframe': trade.timeframe,
         'leverage': trade.leverage,
@@ -499,7 +499,7 @@ def get_closed_trade_details(trade) -> dict:
         'orders': orders_list
     }
     
-    return jh.clean_nan_values(jh.clean_infinite_values(result))
+    return ah.clean_nan_values(ah.clean_infinite_values(result))
 
 
 def get_order_details(order) -> dict:
@@ -526,7 +526,7 @@ def get_order_details(order) -> dict:
         'fee': order.fee
     }
     
-    return jh.clean_nan_values(jh.clean_infinite_values(result))
+    return ah.clean_nan_values(ah.clean_infinite_values(result))
 
 
 def get_significance_test_session(session) -> dict:

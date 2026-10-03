@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import exceptions
 from algorithex.config import config, reset_config
 from algorithex.enums import exchanges, timeframes
@@ -221,15 +221,15 @@ def test_reset_config_clears_values_cached_from_the_previous_mode() -> None:
     config['app']['trading_mode'] = 'papertrade'
     # Pytest reads config fresh, so seed the cache state used by normal runtime
     # processes directly.
-    jh.CACHED_CONFIG['env.data.warmup_candles_num'] = 999
+    ah.CACHED_CONFIG['env.data.warmup_candles_num'] = 999
 
-    assert jh.app_mode() == 'papertrade'
-    assert jh.is_live() is True
-    assert jh.is_paper_trading() is True
+    assert ah.app_mode() == 'papertrade'
+    assert ah.is_live() is True
+    assert ah.is_paper_trading() is True
 
     reset_config()
 
-    assert jh.CACHED_CONFIG == {}
-    assert jh.app_mode() == ''
-    assert jh.is_live() is False
-    assert jh.is_paper_trading() is False
+    assert ah.CACHED_CONFIG == {}
+    assert ah.app_mode() == ''
+    assert ah.is_live() is False
+    assert ah.is_paper_trading() is False

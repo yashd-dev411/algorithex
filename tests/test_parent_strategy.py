@@ -3,7 +3,7 @@ from algorithex.services import candle_service
 import numpy as np
 import pytest
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import research
 from algorithex import exceptions
 from algorithex.config import reset_config
@@ -102,7 +102,7 @@ def test_forming_candles():
     ]
 
     candles = {}
-    key = jh.key(exchanges.SANDBOX, 'BTC-USDT')
+    key = ah.key(exchanges.SANDBOX, 'BTC-USDT')
     candles[key] = {
         'exchange': exchanges.SANDBOX,
         'symbol': 'BTC-USDT',
@@ -132,7 +132,7 @@ def test_sparse_timestamp_routes_are_clock_aligned_and_atomic(fast_mode: bool):
         for minute in observed_minutes
     ], dtype=np.float64)
     candles = {
-        jh.key(exchanges.SANDBOX, 'BTC-USDT'): {
+        ah.key(exchanges.SANDBOX, 'BTC-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'BTC-USDT',
             'candles': candles_array,
@@ -162,7 +162,7 @@ def test_thirteen_missing_minutes_preserve_nonempty_clock_buckets(fast_mode: boo
         [start + 14 * 60_000, 24, 25, 26, 23, 15],
     ], dtype=np.float64)
     candles = {
-        jh.key(exchanges.SANDBOX, 'BTC-USDT'): {
+        ah.key(exchanges.SANDBOX, 'BTC-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'BTC-USDT',
             'candles': candles_array,
@@ -195,10 +195,10 @@ def test_multi_instrument_replay_uses_union_events_and_ignores_stale_orders(reve
         {'symbol': 'ETH-USDT', 'timeframe': '1m', 'strategy': 'TestMultiInstrumentReplayB'},
     ]
     candle_items = [
-        (jh.key(exchanges.SANDBOX, 'BTC-USDT'), {
+        (ah.key(exchanges.SANDBOX, 'BTC-USDT'), {
             'exchange': exchanges.SANDBOX, 'symbol': 'BTC-USDT', 'candles': btc,
         }),
-        (jh.key(exchanges.SANDBOX, 'ETH-USDT'), {
+        (ah.key(exchanges.SANDBOX, 'ETH-USDT'), {
             'exchange': exchanges.SANDBOX, 'symbol': 'ETH-USDT', 'candles': eth,
         }),
     ]
@@ -220,12 +220,12 @@ def test_multi_instrument_replay_rejects_streams_without_a_shared_trading_period
         {'symbol': 'ETH-USDT', 'timeframe': '1m', 'strategy': 'TestEmptyStrategy'},
     ]
     candles = {
-        jh.key(exchanges.SANDBOX, 'BTC-USDT'): {
+        ah.key(exchanges.SANDBOX, 'BTC-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'BTC-USDT',
             'candles': np.array([[start, 10, 10, 10, 10, 1]], dtype=np.float64),
         },
-        jh.key(exchanges.SANDBOX, 'ETH-USDT'): {
+        ah.key(exchanges.SANDBOX, 'ETH-USDT'): {
             'exchange': exchanges.SANDBOX,
             'symbol': 'ETH-USDT',
             'candles': np.array([[start + 120_000, 20, 20, 20, 20, 1]], dtype=np.float64),
@@ -271,8 +271,8 @@ def test_research_uses_one_warmup_safe_start_for_trading_and_data_routes():
         {'exchange': exchange, 'symbol': 'BTC-USDT', 'timeframe': '15m'},
     ]
     candles = {
-        jh.key(exchange, 'BTC-USDT'): _candles('BTC-USDT', 0),
-        jh.key(exchange, 'ETH-USDT'): _candles('ETH-USDT', 5),
+        ah.key(exchange, 'BTC-USDT'): _candles('BTC-USDT', 0),
+        ah.key(exchange, 'ETH-USDT'): _candles('ETH-USDT', 5),
     }
 
     research.backtest(config_input, routes, data_routes, candles)
@@ -302,7 +302,7 @@ def test_is_smart_enough_to_open_positions_via_market_orders():
     ]
 
     candles = {}
-    key = jh.key(exchanges.SANDBOX, 'ETH-USDT')
+    key = ah.key(exchanges.SANDBOX, 'ETH-USDT')
     candles[key] = {
         'exchange': exchanges.SANDBOX,
         'symbol': 'ETH-USDT',
@@ -343,7 +343,7 @@ def test_is_smart_enough_to_open_positions_via_stop_orders():
     ]
 
     candles = {}
-    key = jh.key(exchanges.SANDBOX, 'ETH-USDT')
+    key = ah.key(exchanges.SANDBOX, 'ETH-USDT')
     candles[key] = {
         'exchange': exchanges.SANDBOX,
         'symbol': 'ETH-USDT',
@@ -403,7 +403,7 @@ def test_modifying_stop_loss_after_part_of_position_is_already_reduced_with_stop
     )
 
     candles = {}
-    key = jh.key(exchanges.SANDBOX, 'BTC-USDT')
+    key = ah.key(exchanges.SANDBOX, 'BTC-USDT')
     candles[key] = {
         'exchange': exchanges.SANDBOX,
         'symbol': 'BTC-USDT',
@@ -620,7 +620,7 @@ def test_should_buy_and_execute_buy():
 
     candles = {}
     for r in routes:
-        key = jh.key(exchanges.SANDBOX, r['symbol'])
+        key = ah.key(exchanges.SANDBOX, r['symbol'])
         candles[key] = {
             'exchange': exchanges.SANDBOX,
             'symbol': r['symbol'],
@@ -663,7 +663,7 @@ def test_should_sell_and_execute_sell():
 
     candles = {}
     for r in routes:
-        key = jh.key(exchanges.SANDBOX, r['symbol'])
+        key = ah.key(exchanges.SANDBOX, r['symbol'])
         candles[key] = {
             'exchange': exchanges.SANDBOX,
             'symbol': r['symbol'],
@@ -751,7 +751,7 @@ def test_updating_stop_loss_and_take_profit_after_opening_the_position():
     ]
 
     candles = {}
-    key = jh.key(exchanges.SANDBOX, 'ETH-USDT')
+    key = ah.key(exchanges.SANDBOX, 'ETH-USDT')
     candles[key] = {
         'exchange': exchanges.SANDBOX,
         'symbol': 'ETH-USDT',
@@ -866,7 +866,7 @@ def test_positions():
 
     candles = {}
     for r in routes:
-        key = jh.key(exchanges.SANDBOX, r['symbol'])
+        key = ah.key(exchanges.SANDBOX, r['symbol'])
         candles[key] = {
             'exchange': exchanges.SANDBOX,
             'symbol': r['symbol'],
@@ -888,7 +888,7 @@ def test_portfolio_value():
 
     candles = {}
     for r in routes:
-        key = jh.key(exchanges.SANDBOX, r['symbol'])
+        key = ah.key(exchanges.SANDBOX, r['symbol'])
         candles[key] = {
             'exchange': exchanges.SANDBOX,
             'symbol': r['symbol'],
@@ -1098,7 +1098,7 @@ def test_strategy_charts_report():
 
     from algorithex.services import report
 
-    key = jh.key(exchanges.SANDBOX, 'BTC-USDT', timeframes.MINUTE_1)
+    key = ah.key(exchanges.SANDBOX, 'BTC-USDT', timeframes.MINUTE_1)
 
     snapshot = report.strategy_charts()
     assert set(snapshot.keys()) == {key}
@@ -1134,7 +1134,7 @@ def test_live_chart_line_data_is_capped(monkeypatch):
     assert len(data) == LIVE_CHART_MAX_POINTS_PER_LINE + 5
 
     # live: capped, dropping the oldest points
-    monkeypatch.setattr(jh, 'is_live', lambda: True)
+    monkeypatch.setattr(ah, 'is_live', lambda: True)
     strategy._trim_chart_line_data(data)
     assert len(data) == LIVE_CHART_MAX_POINTS_PER_LINE
     assert data[0]['time'] == 5
@@ -1146,7 +1146,7 @@ def test_live_chart_add_methods_keep_the_latest_points(monkeypatch):
 
     single_route_backtest('TestStrategyChartsReport')
     strategy = router.routes[0].strategy
-    monkeypatch.setattr(jh, 'is_live', lambda: True)
+    monkeypatch.setattr(ah, 'is_live', lambda: True)
 
     candle_data = [
         {'time': i, 'value': float(i), 'color': 'blue'}
@@ -1214,7 +1214,7 @@ def test_intrabar_chart_update_is_guarded_and_recovers_after_errors(monkeypatch)
 def test_intrabar_chart_update_replaces_the_forming_candle_value(monkeypatch):
     single_route_backtest('TestStrategyChartsReport')
     strategy = router.routes[0].strategy
-    monkeypatch.setattr(jh, 'is_live', lambda: True)
+    monkeypatch.setattr(ah, 'is_live', lambda: True)
 
     strategy._update_chart()
     line_data = strategy._add_line_to_candle_chart_values['ema']['data']
@@ -1235,7 +1235,7 @@ def test_live_execution_leaves_chart_updates_to_the_intrabar_scheduler(monkeypat
     single_route_backtest('TestStrategyChartsReport')
     strategy = router.routes[0].strategy
     calls = []
-    monkeypatch.setattr(jh, 'is_live', lambda: True)
+    monkeypatch.setattr(ah, 'is_live', lambda: True)
     monkeypatch.setattr(strategy, 'update_chart', lambda: calls.append('updated'))
 
     strategy._execute()

@@ -2,7 +2,7 @@ import json
 from typing import Optional
 from starlette.responses import JSONResponse
 from algorithex.info import live_trading_exchanges
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services import transformers
 
 
@@ -68,13 +68,13 @@ def store_exchange_api_keys(
     try:
         # create the record
         exchange_api_key: ExchangeApiKeys = ExchangeApiKeys.create(
-            id=jh.generate_unique_id(),
+            id=ah.generate_unique_id(),
             exchange_name=exchange,
             name=name,
             api_key=api_key,
             api_secret=api_secret,
             additional_fields=json.dumps(additional_fields),
-            created_at=jh.now_to_datetime(),
+            created_at=ah.now_to_datetime(),
             general_notifications_id=general_notifications_id if general_notifications_id else None,
             error_notifications_id=error_notifications_id if error_notifications_id else None
         )

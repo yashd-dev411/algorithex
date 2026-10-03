@@ -1,7 +1,7 @@
 from multiprocessing import cpu_count
 from typing import Dict, List, Optional
 import arrow
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.backtest_mode import load_candles
 from algorithex.services.validators import validate_routes
 from algorithex.store import store
@@ -84,8 +84,8 @@ def run(
         if existing_session:
             update_monte_carlo_session_status(session_id, 'running')
             update_monte_carlo_session_state(session_id, state, strategy_codes)
-            if jh.is_debugging():
-                jh.debug(f"Resuming existing Monte Carlo session with ID: {session_id}")
+            if ah.is_debugging():
+                ah.debug(f"Resuming existing Monte Carlo session with ID: {session_id}")
         else:
             store_monte_carlo_session(
                 id=session_id,
@@ -93,11 +93,11 @@ def run(
                 state=state,
                 strategy_codes=strategy_codes if strategy_codes else None
             )
-            if jh.is_debugging():
-                jh.debug(f"Created new Monte Carlo session with ID: {session_id}")
+            if ah.is_debugging():
+                ah.debug(f"Created new Monte Carlo session with ID: {session_id}")
 
-        start_date_timestamp = jh.arrow_to_timestamp(arrow.get(start_date, 'YYYY-MM-DD'))
-        finish_date_timestamp = jh.arrow_to_timestamp(arrow.get(finish_date, 'YYYY-MM-DD'))
+        start_date_timestamp = ah.arrow_to_timestamp(arrow.get(start_date, 'YYYY-MM-DD'))
+        finish_date_timestamp = ah.arrow_to_timestamp(arrow.get(finish_date, 'YYYY-MM-DD'))
         warmup_candles, candles = load_candles(start_date_timestamp, finish_date_timestamp)
 
         runner = MonteCarloRunner(

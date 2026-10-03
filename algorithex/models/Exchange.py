@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from algorithex.models.Order import Order
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.libs import DynamicNumpyArray
 from algorithex.info import exchange_info
 from algorithex.routes import router
@@ -35,15 +35,15 @@ class Exchange(ABC):
         if self.name in exchange_info and 'settlement_currency' in exchange_info[self.name]:
             self.settlement_currency = exchange_info[self.name]['settlement_currency']
         else:
-            self.settlement_currency = jh.quote_asset(first_route.symbol)
+            self.settlement_currency = ah.quote_asset(first_route.symbol)
 
         # initiate dict keys for trading assets
         for r in all_trading_routes:
-            base_asset = jh.base_asset(r.symbol)
+            base_asset = ah.base_asset(r.symbol)
             self.buy_orders[base_asset] = DynamicNumpyArray((10, 2))
             self.sell_orders[base_asset] = DynamicNumpyArray((10, 2))
             self.assets[base_asset] = 0.0
-            self.assets[self.settlement_currency] = 0.0 if jh.is_livetrading() else starting_balance
+            self.assets[self.settlement_currency] = 0.0 if ah.is_livetrading() else starting_balance
             self.temp_reduced_amount[base_asset] = 0.0
             self.temp_reduced_amount[self.settlement_currency] = 0.0
             self.starting_assets[base_asset] = 0.0

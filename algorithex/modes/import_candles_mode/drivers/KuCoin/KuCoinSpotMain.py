@@ -4,7 +4,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import exceptions
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from .kucoin_utils import timeframe_to_spot_type
@@ -74,7 +74,7 @@ class KuCoinSpotMain(CandleExchange):
 
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> list:
         type_ = timeframe_to_spot_type(timeframe)
-        interval_sec = jh.timeframe_to_one_minutes(timeframe) * 60
+        interval_sec = ah.timeframe_to_one_minutes(timeframe) * 60
         start_sec = int(start_timestamp / 1000)
         # request exactly `count` candles forward from start: [start, start + count*interval)
         end_sec = start_sec + self.count * interval_sec
@@ -90,7 +90,7 @@ class KuCoinSpotMain(CandleExchange):
 
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,

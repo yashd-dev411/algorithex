@@ -20,14 +20,25 @@ _MODULE_NAME = "algorithex_kernel"
 
 # Filename stem per interpreter/platform. The binaries are built for the stable
 # ABI, so one file serves every CPython 3.10+ on that platform.
-_CANDIDATE_NAMES = ("algorithex_kernel.so", "algorithex_kernel.pyd")
+_SUFFIXES = ("so", "pyd", "dylib")
+
+# Every platform's binary ships in the same directory, so try this platform's
+# suffix first instead of relying on a foreign binary failing to load.
+_SUFFIXES_BY_PLATFORM = {"linux": "so", "win32": "pyd", "darwin": "dylib"}
+_NATIVE_SUFFIX = _SUFFIXES_BY_PLATFORM.get(sys.platform)
+
+
+def _candidates() -> tuple[str, ...]:
+    ordered = (_NATIVE_SUFFIX,) if _NATIVE_SUFFIX else ()
+    ordered += tuple(s for s in _SUFFIXES if s not in ordered)
+    return tuple(f"{_MODULE_NAME}.{suffix}" for suffix in ordered)
 
 
 def _load() -> ModuleType:
     # CPython resolves the init symbol from the module name, so the extension
     # must be loaded under exactly this name regardless of its file suffix.
     errors: list[str] = []
-    for name in _CANDIDATE_NAMES:
+    for name in _candidates():
         path = os.path.join(_BIN_DIR, name)
         if not os.path.exists(path):
             continue

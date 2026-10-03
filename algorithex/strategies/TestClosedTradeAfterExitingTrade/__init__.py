@@ -1,4 +1,4 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.strategies import Strategy
 
 
@@ -25,7 +25,7 @@ class TestClosedTradeAfterExitingTrade(Strategy):
 
         trade = self.trades[0]
 
-        assert jh.is_valid_uuid(trade.id) is True
+        assert ah.is_valid_uuid(trade.id) is True
         assert trade.strategy_name == 'TestClosedTradeAfterExitingTrade'
         assert trade.symbol == 'BTC-USDT'
         assert trade.exchange == 'Sandbox'

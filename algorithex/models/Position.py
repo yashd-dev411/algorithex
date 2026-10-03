@@ -1,6 +1,6 @@
 from typing import Union
 import numpy as np
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 class Position:
@@ -30,7 +30,7 @@ class Position:
 
     @property
     def mark_price(self) -> float:
-        if not jh.is_live():
+        if not ah.is_live():
             return self.current_price
 
         if self.exchange_type == 'spot':
@@ -40,7 +40,7 @@ class Position:
 
     @property
     def funding_rate(self) -> float:
-        if not jh.is_live():
+        if not ah.is_live():
             return 0
 
         if self.exchange_type == 'spot':
@@ -50,7 +50,7 @@ class Position:
 
     @property
     def next_funding_timestamp(self) -> Union[int, None]:
-        if not jh.is_live():
+        if not ah.is_live():
             return None
 
         if self.exchange_type == 'spot':
@@ -221,7 +221,7 @@ class Position:
         if self.is_close:
             return np.nan
 
-        if jh.is_livetrading():
+        if ah.is_livetrading():
             return self._liquidation_price
 
         if self.mode in ['cross', 'spot']:
@@ -270,14 +270,14 @@ class Position:
 
     @property
     def _min_notional_size(self) -> float:
-        if not (jh.is_livetrading() and self.exchange_type == 'spot'):
+        if not (ah.is_livetrading() and self.exchange_type == 'spot'):
             return 0
 
         return self.exchange.vars['precisions'][self.symbol]['min_notional_size']
 
     @property
     def _min_qty(self) -> float:
-        if not (jh.is_livetrading() and self.exchange_type == 'spot'):
+        if not (ah.is_livetrading() and self.exchange_type == 'spot'):
             return 0
 
         # first check exchange return min_qty or not
@@ -291,4 +291,4 @@ class Position:
 
     @property
     def _can_mutate_qty(self):
-        return not (self.exchange_type == 'spot' and jh.is_livetrading())
+        return not (self.exchange_type == 'spot' and ah.is_livetrading())

@@ -262,8 +262,8 @@ def test_live_trade_updates_candle_position_and_database(monkeypatch):
     })
 
     # Exercise the live path while replacing external state with observable fakes.
-    monkeypatch.setattr(candle_service.jh, 'is_live', lambda: True)
-    monkeypatch.setattr(candle_service.jh, 'now', lambda: start + 30_000)
+    monkeypatch.setattr(candle_service.ah, 'is_live', lambda: True)
+    monkeypatch.setattr(candle_service.ah, 'now', lambda: start + 30_000)
     monkeypatch.setattr(store.positions, 'get_position', lambda exchange, symbol: position)
     monkeypatch.setattr(store.exchanges, 'get_exchange', lambda name: exchange)
     monkeypatch.setattr(

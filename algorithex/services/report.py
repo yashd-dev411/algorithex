@@ -1,7 +1,7 @@
 import warnings
 from typing import List, Any, Union, Dict
 import pandas as pd
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.config import config
 from algorithex.routes import router
 from algorithex.services import metrics as stats
@@ -22,7 +22,7 @@ def positions() -> list:
             continue
         p: Position = r.strategy.position
         arr.append({
-            'currency': jh.app_currency(),
+            'currency': ah.app_currency(),
             'type': p.type,
             'strategy_name': p.strategy.name,
             'symbol': p.symbol,
@@ -58,7 +58,7 @@ def candles() -> dict:
     for k in candle_keys:
         try:
             c = candle_service.get_current_candle(k['exchange'], k['symbol'], k['timeframe'])
-            key = jh.key(k['exchange'], k['symbol'], k['timeframe'])
+            key = ah.key(k['exchange'], k['symbol'], k['timeframe'])
             candles_dict[key] = {
                 'time': int(c[0] / 1000),
                 'open': c[1],
@@ -115,11 +115,11 @@ def livetrade():
     return {
         'session_id': store.app.session_id,
         'started_at': str(store.app.starting_time),
-        'current_time': str(jh.now_to_timestamp()),
+        'current_time': str(ah.now_to_timestamp()),
         'started_balance': str(starting_balance),
         'current_balance': str(current_balance),
         'debug_mode': str(config['app']['debug_mode']),
-        'paper_mode': str(jh.is_paper_trading()),
+        'paper_mode': str(ah.is_paper_trading()),
         'count_error_logs': str(len(store.logs.errors)),
         'count_info_logs': str(len(store.logs.info)),
         'count_active_orders': str(store.orders.count_all_active_orders()),
@@ -148,7 +148,7 @@ def strategy_charts() -> dict:
     for r in router.routes:
         if r.strategy is None:
             continue
-        result[jh.key(r.exchange, r.symbol, r.timeframe)] = {
+        result[ah.key(r.exchange, r.symbol, r.timeframe)] = {
             'lines': r.strategy._add_line_to_candle_chart_values,
             'horizontal_lines': r.strategy._add_horizontal_line_to_candle_chart_values,
             'extra_charts': r.strategy._add_extra_line_chart_values,
@@ -184,7 +184,7 @@ def strategy_charts_updates() -> dict:
             if chart_updates:
                 extra_charts[chart_name] = chart_updates
 
-        result[jh.key(r.exchange, r.symbol, r.timeframe)] = {
+        result[ah.key(r.exchange, r.symbol, r.timeframe)] = {
             'lines': lines,
             'horizontal_lines': r.strategy._add_horizontal_line_to_candle_chart_values,
             'extra_charts': extra_charts,
@@ -209,7 +209,7 @@ def trades() -> List[dict]:
 def info() -> List[List[Union[str, Any]]]:
     return [
         [
-            jh.timestamp_to_time(w['time'])[11:19],
+            ah.timestamp_to_time(w['time'])[11:19],
             f"{w['message'][:70]}.."
             if len(w['message']) > 70
             else w['message'],
@@ -232,7 +232,7 @@ def watch_list() -> Dict[str, List[List[Union[str, str]]]]:
 
         # skip if strategy object is not initialized yet
         if strategy is None or not store.candles.are_all_initiated:
-            results[jh.key(r.exchange, r.symbol, r.timeframe)] = []
+            results[ah.key(r.exchange, r.symbol, r.timeframe)] = []
             continue
 
         try:
@@ -251,7 +251,7 @@ def watch_list() -> Dict[str, List[List[Union[str, str]]]]:
 
             watch_list_array[index] = (str(value[0]), str(value[1]))
 
-        results[jh.key(r.exchange, r.symbol, r.timeframe)] = watch_list_array if len(watch_list_array) else []
+        results[ah.key(r.exchange, r.symbol, r.timeframe)] = watch_list_array if len(watch_list_array) else []
 
     return results
 
@@ -259,7 +259,7 @@ def watch_list() -> Dict[str, List[List[Union[str, str]]]]:
 def errors() -> List[List[Union[str, Any]]]:
     return [
         [
-            jh.timestamp_to_time(w['time'])[11:19],
+            ah.timestamp_to_time(w['time'])[11:19],
             f"{w['message'][:70]}.."
             if len(w['message']) > 70
             else w['message'],

@@ -1,11 +1,11 @@
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.modes.import_candles_mode as importer
 from tests.data import test_candles_0
 
 test_object_candles = []
 for c in test_candles_0:
     test_object_candles.append({
-        'id': jh.generate_unique_id(),
+        'id': ah.generate_unique_id(),
         'symbol': 'BTC-USD',
         'exchange': 'Sandbox',
         'timestamp': c[0],

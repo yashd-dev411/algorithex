@@ -3,7 +3,7 @@ from typing import List
 import fnc
 
 from algorithex.models.Order import Order
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 class OrdersState:
@@ -34,7 +34,7 @@ class OrdersState:
         """Add order to in-memory state only"""
         key = f'{order.exchange}-{order.symbol}'
 
-        if jh.is_live():
+        if ah.is_live():
             # Check if order with same id already exists
             existing_order = fnc.find(lambda o: o.id == order.id, self.storage.get(key, []))
             if existing_order:

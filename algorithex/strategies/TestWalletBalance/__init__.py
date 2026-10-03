@@ -1,6 +1,6 @@
 from algorithex import utils
 from algorithex.strategies import Strategy
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 
 
 class TestWalletBalance(Strategy):

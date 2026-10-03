@@ -16,7 +16,7 @@ import copy
 import numpy as np
 from typing import List, Dict, Optional
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.config import config as algorithex_config, set_config
 from algorithex.routes import router
 from algorithex.store import store
@@ -125,7 +125,7 @@ def _execute_signal_only_backtest(
             for candle_data in trading_candles.values()
         )
         for c in algorithex_config['app']['considering_candles']:
-            key = jh.key(c[0], c[1])
+            key = ah.key(c[0], c[1])
             candle_service.inject_warmup_candles_to_store(
                 warmup_candles_copy[key]['candles'],
                 c[0],
@@ -142,7 +142,7 @@ def _execute_signal_only_backtest(
     candles_pipelines = _prepare_routes(hyperparameters=hyperparameters, with_candles_pipeline=False)
     route = router.routes[0]
     generating_timeframes = [
-        (timeframe, jh.timeframe_to_one_minutes(timeframe))
+        (timeframe, ah.timeframe_to_one_minutes(timeframe))
         for timeframe in algorithex_config['app']['considering_timeframes']
         if timeframe != '1m'
     ]

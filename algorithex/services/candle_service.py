@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 import arrow
 from algorithex.exceptions import CandleNotFoundInDatabase, InvalidDateRange, RouteNotFound
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services import logger
 from algorithex.routes import router
 from timeloop import Timeloop
@@ -22,9 +22,9 @@ def generate_candle_from_one_minutes(
     if len(candles) == 0:
         raise ValueError('No candles were passed')
 
-    if not accept_forming_candles and len(candles) != jh.timeframe_to_one_minutes(timeframe):
+    if not accept_forming_candles and len(candles) != ah.timeframe_to_one_minutes(timeframe):
         raise ValueError(
-            f'Sent only {len(candles)} candles but {jh.timeframe_to_one_minutes(timeframe)} is required to create a "{timeframe}" candle.'
+            f'Sent only {len(candles)} candles but {ah.timeframe_to_one_minutes(timeframe)} is required to create a "{timeframe}" candle.'
         )
 
     # the Rust kernel is bit-exact vs numpy for blocks up to 4320 rows (every
@@ -48,7 +48,7 @@ def generate_candle_from_observed_minutes(timeframe: str, candles: np.ndarray) -
     if len(candles) == 0:
         raise ValueError('No candles were passed')
 
-    timeframe_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+    timeframe_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
     bucket_start = int(candles[0, 0]) - (int(candles[0, 0]) % timeframe_ms)
     if ((candles[:, 0].astype(np.int64) // timeframe_ms) * timeframe_ms != bucket_start).any():
         raise ValueError(f'Observed candles span more than one "{timeframe}" clock bucket.')
@@ -67,7 +67,7 @@ def generate_completed_candles_from_observed_minutes(
     if len(candles) == 0:
         return np.zeros((0, 6))
 
-    timeframe_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+    timeframe_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
     bucket_starts = (candles[:, 0].astype(np.int64) // timeframe_ms) * timeframe_ms
     boundaries = np.flatnonzero(np.diff(bucket_starts)) + 1
     starts = np.concatenate(([0], boundaries))
@@ -99,7 +99,7 @@ def print_candle(candle: np.ndarray, is_partial: bool, symbol: str) -> None:
     :param is_partial: bool
     :param symbol: str
     """
-    if jh.should_execute_silently():
+    if ah.should_execute_silently():
         return
 
     candle_form = '  ==' if is_partial else '===='
@@ -267,9 +267,9 @@ def get_candles_from_db(
     symbol = symbol.upper()
 
     # convert start_date and finish_date to timestamps
-    trading_start_date_timestamp = jh.timestamp_to_arrow(start_date_timestamp).floor(
+    trading_start_date_timestamp = ah.timestamp_to_arrow(start_date_timestamp).floor(
         'day').int_timestamp * 1000
-    trading_finish_date_timestamp = (jh.timestamp_to_arrow(finish_date_timestamp).floor(
+    trading_finish_date_timestamp = (ah.timestamp_to_arrow(finish_date_timestamp).floor(
         'day').int_timestamp * 1000) - 60_000
 
     # if warmup_candles is set, calculate the warmup start and finish timestamps
@@ -286,7 +286,7 @@ def get_candles_from_db(
             )
         else:
             warmup_start_timestamp = warmup_finish_timestamp - (
-                    warmup_candles_num * jh.timeframe_to_one_minutes(timeframe) * 60_000)
+                    warmup_candles_num * ah.timeframe_to_one_minutes(timeframe) * 60_000)
             warmup_finish_timestamp -= 60_000
             warmup_candles = _get_candles_from_db(
                 exchange,
@@ -324,7 +324,7 @@ def _get_candles_from_db(
     from algorithex.services.cache import cache
 
     if caching:
-        key = jh.key(exchange, symbol)
+        key = ah.key(exchange, symbol)
         cache_key = f"{start_date_timestamp}-{finish_date_timestamp}-{key}"
         cached_value = cache.get_value(cache_key)
         if cached_value:
@@ -334,17 +334,17 @@ def _get_candles_from_db(
     if start_date_timestamp == finish_date_timestamp:
         raise InvalidDateRange('start_date and finish_date cannot be the same.')
     if start_date_timestamp > finish_date_timestamp:
-        raise InvalidDateRange(f'start_date ({jh.timestamp_to_date(start_date_timestamp)}) is greater than finish_date ({jh.timestamp_to_date(finish_date_timestamp)}).')
+        raise InvalidDateRange(f'start_date ({ah.timestamp_to_date(start_date_timestamp)}) is greater than finish_date ({ah.timestamp_to_date(finish_date_timestamp)}).')
     
     # validate finish_date is not in the future
     current_timestamp = arrow.utcnow().int_timestamp * 1000
     if finish_date_timestamp > current_timestamp:
-        yesterday_date = jh.timestamp_to_date(current_timestamp - 86400000)
-        raise InvalidDateRange(f'The finish date "{jh.timestamp_to_time(finish_date_timestamp)[:19]}" cannot be in the future. Please select a date up to "{yesterday_date}".')
+        yesterday_date = ah.timestamp_to_date(current_timestamp - 86400000)
+        raise InvalidDateRange(f'The finish date "{ah.timestamp_to_time(finish_date_timestamp)[:19]}" cannot be in the future. Please select a date up to "{yesterday_date}".')
 
     # validate start_date is not in the future
     if start_date_timestamp > current_timestamp:
-        raise InvalidDateRange(f'Can\'t backtest the future! start_date ({jh.timestamp_to_date(start_date_timestamp)}) is greater than the current time ({jh.timestamp_to_date(current_timestamp)}).')
+        raise InvalidDateRange(f'Can\'t backtest the future! start_date ({ah.timestamp_to_date(start_date_timestamp)}) is greater than the current time ({ah.timestamp_to_date(current_timestamp)}).')
 
     # Always materialize the database results immediately
     candles_tuple = list(Candle.select(
@@ -359,7 +359,7 @@ def _get_candles_from_db(
 
     # Check if we got any candles
     if not candles_tuple:
-        raise CandleNotFoundInDatabase(f"No candles found for {symbol} on {exchange} between {jh.timestamp_to_date(start_date_timestamp)} and {jh.timestamp_to_date(finish_date_timestamp)}.")
+        raise CandleNotFoundInDatabase(f"No candles found for {symbol} on {exchange} between {ah.timestamp_to_date(start_date_timestamp)} and {ah.timestamp_to_date(finish_date_timestamp)}.")
     
     # Convert to numpy array for easier timestamp extraction
     candles_array = np.array(candles_tuple)
@@ -385,14 +385,14 @@ def _get_observed_warmup_candles_from_db(
 
     cache_key = (
         f'observed-warmup-{trading_start_timestamp}-{candle_count}-{timeframe}-'
-        f'{jh.key(exchange, symbol)}'
+        f'{ah.key(exchange, symbol)}'
     )
     if caching:
         cached_value = cache.get_value(cache_key)
         if cached_value:
             return np.array(cached_value)
 
-    timeframe_minutes = jh.timeframe_to_one_minutes(timeframe)
+    timeframe_minutes = ah.timeframe_to_one_minutes(timeframe)
     timeframe_ms = timeframe_minutes * 60_000
     required_bucket_starts: set[int] = set()
     cursor = trading_start_timestamp
@@ -424,7 +424,7 @@ def _get_observed_warmup_candles_from_db(
         raise CandleNotFoundInDatabase(
             f'Only {len(required_bucket_starts)} of {candle_count} required completed {timeframe} '
             f'warmup candles were found '
-            f'for {symbol} on {exchange} before {jh.timestamp_to_date(trading_start_timestamp)}.'
+            f'for {symbol} on {exchange} before {ah.timestamp_to_date(trading_start_timestamp)}.'
         )
 
     earliest_bucket_start = sorted(required_bucket_starts, reverse=True)[candle_count - 1]
@@ -486,7 +486,7 @@ def generate_new_candles_loop() -> None:
             return
 
         # only at first second on each minute
-        if jh.now() % 60_000 != 1000:
+        if ah.now() % 60_000 != 1000:
             return
 
         for c in router.all_formatted_routes:
@@ -500,7 +500,7 @@ def generate_new_candles_loop() -> None:
             # if a missing candle is found, generate an empty candle from the
             # last one this is useful when the exchange doesn't stream an empty
             # candle when no volume is traded at the period of the candle
-            if jh.next_candle_timestamp(current_candle, timeframe) < jh.now():
+            if ah.next_candle_timestamp(current_candle, timeframe) < ah.now():
                 new_candle = _generate_empty_candle_from_previous_candle(current_candle, timeframe=timeframe)
                 add_candle(new_candle, exchange, symbol, timeframe)
 
@@ -515,7 +515,7 @@ def _generate_empty_candle_from_previous_candle(
     generate an empty candle from the previous candle
     """
     new_candle = previous_candle.copy()
-    candles_count = jh.timeframe_to_one_minutes(timeframe) * 60_000
+    candles_count = ah.timeframe_to_one_minutes(timeframe) * 60_000
     new_candle[0] = previous_candle[0] + candles_count
     # new candle's open, close, high, and low all equal to previous candle's close
     new_candle[1] = previous_candle[2]
@@ -536,16 +536,16 @@ def add_candle(
         with_generation: bool = True,
         with_skip: bool = True
 ) -> None:
-    is_live = jh.is_live()
+    is_live = ah.is_live()
 
     # overwrite with_generation based on the config value for live sessions
-    if is_live and not jh.get_config('env.data.generate_candles_from_1m'):
+    if is_live and not ah.get_config('env.data.generate_candles_from_1m'):
         with_generation = False
 
     candle_timestamp = candle[0]
 
     if candle_timestamp == 0:
-        if jh.is_debugging():
+        if ah.is_debugging():
             logger.error(
                 f"DEBUGGING-VALUE: please report to Saleh: candle[0] is zero. \nFull candle: {candle}\n"
             )
@@ -559,12 +559,12 @@ def add_candle(
             return
 
         # if it's not an old candle, update the related position's current_price
-        if jh.next_candle_timestamp(candle, timeframe) > jh.now():
+        if ah.next_candle_timestamp(candle, timeframe) > ah.now():
             _update_position_current_price(exchange, symbol, candle[2])
 
         # ignore new candle at the time of execution because it messes
         # the count of candles without actually having an impact
-        if candle_timestamp >= jh.now():
+        if candle_timestamp >= ah.now():
             return
 
         _store_or_update_candle_into_db(exchange, symbol, timeframe, candle)
@@ -609,7 +609,7 @@ def add_candle(
                 break
     else:
         logger.info(
-            f"Could not find the candle with timestamp {jh.timestamp_to_time(candle[0])} in the storage. Last candle's timestamp: {jh.timestamp_to_time(arr[-1])}. timeframe: {timeframe}, exchange: {exchange}, symbol: {symbol}"
+            f"Could not find the candle with timestamp {ah.timestamp_to_time(candle[0])} in the storage. Last candle's timestamp: {ah.timestamp_to_time(arr[-1])}. timeframe: {timeframe}, exchange: {exchange}, symbol: {symbol}"
         )
 
 
@@ -627,11 +627,11 @@ def _update_position_current_price(exchange: str, symbol: str, price: float) -> 
     if p is None:
         return
 
-    if jh.is_live():
+    if ah.is_live():
         price_precision = store.exchanges.get_exchange(exchange).vars['precisions'][symbol]['price_precision']
 
         # update position.current_price
-        p.current_price = jh.round_price_for_live_mode(price, price_precision)
+        p.current_price = ah.round_price_for_live_mode(price, price_precision)
     else:
         p.current_price = price
 
@@ -641,7 +641,7 @@ def add_candle_from_trade(trade, exchange: str, symbol: str) -> np.ndarray | Non
     In few exchanges, there's no candle stream over the WS, for
     those we have to use cases the trades stream
     """
-    if not jh.is_live():
+    if not ah.is_live():
         raise Exception('add_candle_from_trade() is for live modes only')
 
     # ignore if candle is still being initially imported
@@ -655,7 +655,7 @@ def add_candle_from_trade(trade, exchange: str, symbol: str) -> np.ndarray | Non
         # in some cases we might be missing the current forming candle like it is on FTX, hence
         # if that is the case, generate the current forming candle (it won't be super accurate)
         current_candle = get_current_candle(exchange, symbol, t)
-        if jh.next_candle_timestamp(current_candle, t) < jh.now():
+        if ah.next_candle_timestamp(current_candle, t) < ah.now():
             new_candle = _generate_empty_candle_from_previous_candle(current_candle, t)
             add_candle(new_candle, exchange, symbol, t)
 
@@ -675,7 +675,7 @@ def add_candle_from_trade(trade, exchange: str, symbol: str) -> np.ndarray | Non
         return new_candle
 
     # to support both candle generation and ...
-    if jh.get_config('env.data.generate_candles_from_1m'):
+    if ah.get_config('env.data.generate_candles_from_1m'):
         return do('1m')
     else:
         for r in router.all_formatted_routes:
@@ -685,7 +685,7 @@ def add_candle_from_trade(trade, exchange: str, symbol: str) -> np.ndarray | Non
 
 
 def _generate_bigger_timeframes(candle: np.ndarray, exchange: str, symbol: str, with_execution: bool) -> None:
-    if not jh.is_live():
+    if not ah.is_live():
         return
 
     for timeframe in config['app']['considering_timeframes']:
@@ -695,7 +695,7 @@ def _generate_bigger_timeframes(candle: np.ndarray, exchange: str, symbol: str, 
 
         # Elapsed minutes are not row counts when an exchange omits no-trade bars.
         # Select only observations in this candle's UTC bucket, including forming rows.
-        timeframe_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+        timeframe_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
         bucket_start = int(candle[0]) - int(candle[0]) % timeframe_ms
         short_candles = get_candles(exchange, symbol, '1m')
         start_index = int(np.searchsorted(short_candles[:, 0], bucket_start, side='left'))
@@ -741,7 +741,7 @@ def get_candles(exchange: str, symbol: str, timeframe: str) -> np.ndarray:
         return _get_timestamp_bucket_candles(exchange, symbol, timeframe)
 
     # other timeframes
-    required_1m_to_complete_count = jh.timeframe_to_one_minutes(timeframe)
+    required_1m_to_complete_count = ah.timeframe_to_one_minutes(timeframe)
     short_arr: DynamicNumpyArray = storage.get(f'{exchange}-{symbol}-1m')
     if short_arr is None:
         raise RouteNotFound(symbol, '1m')
@@ -762,7 +762,7 @@ def get_candles(exchange: str, symbol: str, timeframe: str) -> np.ndarray:
     if dif == 0:
         return long_array[:long_count]
     # generate forming candle only if NOT in live mode
-    elif not jh.is_live():
+    elif not ah.is_live():
         forming_candle = generate_candle_from_one_minutes(
             timeframe,
             short_array[short_count - dif:short_count],
@@ -790,7 +790,7 @@ def _get_timestamp_bucket_candles(exchange: str, symbol: str, timeframe: str) ->
     if long_arr is None:
         raise RouteNotFound(symbol, timeframe)
 
-    timeframe_ms = jh.timeframe_to_one_minutes(timeframe) * 60_000
+    timeframe_ms = ah.timeframe_to_one_minutes(timeframe) * 60_000
     current_bucket_start = int(short_array[short_index, 0])
     current_bucket_start -= current_bucket_start % timeframe_ms
 
@@ -824,7 +824,7 @@ def get_current_candle(exchange: str, symbol: str, timeframe: str) -> np.ndarray
         else:
             return arr[-1]
 
-    if jh.is_live():
+    if ah.is_live():
         # Live stores already hold native exchange bars or clock-aligned locally
         # generated bars. Reconstructing by 1m row count would corrupt sparse history
         # and could override native bars when local generation is disabled.
@@ -857,7 +857,7 @@ def add_multiple_1m_candles(
     exchange: str,
     symbol: str,
 ) -> None:
-    if not (jh.is_backtesting() or jh.is_optimizing()):
+    if not (ah.is_backtesting() or ah.is_optimizing()):
         raise Exception('add_multiple_1m_candles() is for backtesting or optimizing only')
 
     arr: DynamicNumpyArray = store.candles.get_storage(exchange, symbol, '1m')
@@ -879,4 +879,4 @@ def add_multiple_1m_candles(
 
     # Otherwise,it's true and error.
     else:
-        raise IndexError(f"Could not find the candle with timestamp {jh.timestamp_to_time(candles[0, 0])} in the storage. Last candle's timestamp: {jh.timestamp_to_time(arr[-1][0])}. exchange: {exchange}, symbol: {symbol}")
+        raise IndexError(f"Could not find the candle with timestamp {ah.timestamp_to_time(candles[0, 0])} in the storage. Last candle's timestamp: {ah.timestamp_to_time(arr[-1][0])}. exchange: {exchange}, symbol: {symbol}")

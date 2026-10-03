@@ -1,7 +1,7 @@
 import numpy as np
 import peewee
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.services.db import database
 from algorithex.libs.dynamic_numpy_array import DynamicNumpyArray
 from algorithex.enums import trade_types
@@ -56,7 +56,7 @@ class ClosedTrade(peewee.Model):
     def to_json(self) -> dict:
         return {
             "id": self.id,
-            "strategy_name": jh.get_class_name(self.strategy_name),
+            "strategy_name": ah.get_class_name(self.strategy_name),
             "symbol": self.symbol,
             "exchange": self.exchange,
             "type": self.type,
@@ -76,7 +76,7 @@ class ClosedTrade(peewee.Model):
     def to_dict(self) -> dict:
         return {
             'id': self.id,
-            'strategy_name': jh.get_class_name(self.strategy_name),
+            'strategy_name': ah.get_class_name(self.strategy_name),
             'symbol': self.symbol,
             'exchange': self.exchange,
             'type': self.type,

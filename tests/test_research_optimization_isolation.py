@@ -7,7 +7,7 @@ import ray
 from algorithex import research
 from algorithex.config import config
 from algorithex.factories import candles_from_close_prices
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.optimize_mode import fitness
 from algorithex.routes import router
 from algorithex.store import store
@@ -35,7 +35,7 @@ def _optimization_inputs() -> tuple[dict, list, list, dict, dict]:
 
     def candle_set(prices: range) -> dict:
         return {
-            jh.key(exchange, symbol): {
+            ah.key(exchange, symbol): {
                 'exchange': exchange,
                 'symbol': symbol,
                 'candles': candles_from_close_prices(prices),
@@ -52,8 +52,8 @@ def _assert_research_runtime_is_clean() -> None:
     assert store.vars == {}
     assert store.exchanges.storage == {}
     assert store.orders.storage == {}
-    assert jh.is_live() is False
-    assert jh.is_optimizing() is False
+    assert ah.is_live() is False
+    assert ah.is_optimizing() is False
 
 
 @pytest.mark.slow
@@ -156,7 +156,7 @@ def test_ray_fitness_uses_explicit_worker_configuration(monkeypatch: pytest.Monk
         'omega',
     )
 
-    assert score == jh.normalize(2, -0.5, 5)
+    assert score == ah.normalize(2, -0.5, 5)
     assert actual_training == training_metrics
     assert actual_testing == testing_metrics
     assert fitness._formatted_inputs_for_isolated_backtest(user_config, routes)['warm_up_candles'] == 37
@@ -169,7 +169,7 @@ def test_optimization_cleans_parent_state_after_failure(monkeypatch: pytest.Monk
         config['app']['trading_mode'] = 'optimize'
         router.routes.append(object())
         store.vars['trial'] = 'partial'
-        assert jh.is_optimizing() is True
+        assert ah.is_optimizing() is True
         raise RuntimeError('intentional optimization failure')
 
     monkeypatch.setattr(optimize_module, '_execute_optimize', fail_after_bootstrap)

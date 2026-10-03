@@ -2,7 +2,7 @@ import requests
 import time
 from requests.exceptions import ConnectionError, RequestException
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex import exceptions
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from algorithex.enums import exchanges
@@ -33,7 +33,7 @@ class BitfinexSpot(CandleExchange):
                     raise e
                 
                 # Exponential backoff with jitter
-                delay = (self.base_delay * 2 ** attempt) + (jh.random_uniform(0, 1))
+                delay = (self.base_delay * 2 ** attempt) + (ah.random_uniform(0, 1))
                 time.sleep(delay)
 
     def get_starting_time(self, symbol: str) -> int:
@@ -67,7 +67,7 @@ class BitfinexSpot(CandleExchange):
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str) -> list:
         # since Bitfinex API skips candles with "volume=0", we have to send end_timestamp
         # instead of limit. Therefore, we use limit number to calculate the end_timestamp
-        end_timestamp = start_timestamp + (self.count - 1) * 60000 * jh.timeframe_to_one_minutes(timeframe)
+        end_timestamp = start_timestamp + (self.count - 1) * 60000 * ah.timeframe_to_one_minutes(timeframe)
         interval = timeframe_to_interval(timeframe)
 
         payload = {
@@ -90,7 +90,7 @@ class BitfinexSpot(CandleExchange):
 
         data = response.json()
         return [{
-            'id': jh.generate_unique_id(),
+            'id': ah.generate_unique_id(),
             'exchange': self.name,
             'symbol': symbol,
             'timeframe': timeframe,
@@ -110,11 +110,11 @@ class BitfinexSpot(CandleExchange):
         for s in data:
             # if has : like CELO:USD, remove the : and make it CELO-USD
             if ':' in s:
-               symbol = jh.dashy_symbol(s.replace(':', '-'))
+               symbol = ah.dashy_symbol(s.replace(':', '-'))
                arr.append(symbol)
                self.all_unique_symbols[symbol] = s
             else:
-                symbol = jh.dashy_symbol(s)
+                symbol = ah.dashy_symbol(s)
                 arr.append(symbol)
                 self.all_unique_symbols[symbol] = s
         return arr

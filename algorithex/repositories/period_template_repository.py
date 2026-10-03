@@ -1,13 +1,13 @@
 import time
 import uuid
 from typing import List
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models.PeriodTemplate import PeriodTemplate
 from algorithex.services.db import database
 
 
 def _now_ms() -> int:
-    # millisecond precision: jh.now_to_timestamp() only has second resolution,
+    # millisecond precision: ah.now_to_timestamp() only has second resolution,
     # which ties templates saved within the same second and breaks recency order
     return int(time.time() * 1000)
 
@@ -30,7 +30,7 @@ def get_period_templates() -> List[dict]:
     """
     Get all saved period templates, most recently used first
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     _ensure_db_open()
@@ -47,7 +47,7 @@ def add_period_template(start_date: str, finish_date: str) -> List[dict]:
     Save a date range as a template. If the same range already exists,
     it is just marked as recently used. Returns the updated list.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     _ensure_db_open()
@@ -75,7 +75,7 @@ def remove_period_template(template_id: str) -> List[dict]:
     """
     Delete a saved period template. Returns the updated list.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     _ensure_db_open()
@@ -88,7 +88,7 @@ def touch_period_template(template_id: str) -> List[dict]:
     """
     Mark a template as just used so it sorts to the front. Returns the updated list.
     """
-    if jh.is_unit_testing():
+    if ah.is_unit_testing():
         return []
 
     _ensure_db_open()

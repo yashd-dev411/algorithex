@@ -2,7 +2,7 @@ import os
 import peewee
 import json
 from algorithex.services.db import database
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import json
 
 
@@ -95,7 +95,7 @@ class OptimizationSession(peewee.Model):
         if isinstance(s, dict) and 'form' in s and isinstance(s['form'], dict):
             for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
                 if key in s['form']:
-                    s['form'][key] = jh.normalize_bool(s['form'].get(key))
+                    s['form'][key] = ah.normalize_bool(s['form'].get(key))
         return s
     
     @state_json.setter
@@ -128,8 +128,8 @@ class OptimizationSession(peewee.Model):
         """
         if not self.updated_at:
             # For running sessions, calculate duration up to now
-            import algorithex.helpers as jh
-            return jh.now_to_timestamp(True) - self.created_at
+            import algorithex.helpers as ah
+            return ah.now_to_timestamp(True) - self.created_at
         
         # For completed sessions, use the stored timestamps
         return self.updated_at - self.created_at
@@ -171,7 +171,7 @@ def reset_optimization_session(id: str):
         best_trials=None,
         exception=None,
         traceback=None,
-        updated_at=jh.now_to_timestamp(True)
+        updated_at=ah.now_to_timestamp(True)
     ).where(OptimizationSession.id == id).execute()
 
 
@@ -185,8 +185,8 @@ def store_optimization_session(
         'id': id,
         'status': status,
         'completed_trials': 0,
-        'created_at': jh.now_to_timestamp(True),
-        'updated_at': jh.now_to_timestamp(True)
+        'created_at': ah.now_to_timestamp(True),
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     if strategy_codes is not None:
@@ -199,7 +199,7 @@ def store_optimization_session(
 def update_optimization_session_status(id: str, status: str) -> None:
     d = {
         'status': status,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     OptimizationSession.update(**d).where(OptimizationSession.id == id).execute()
@@ -209,7 +209,7 @@ def add_session_exception(id: str, exception: str, traceback: str) -> None:
     d = {
         'exception': exception,
         'traceback': traceback,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
 
     OptimizationSession.update(**d).where(OptimizationSession.id == id).execute()
@@ -224,7 +224,7 @@ def update_optimization_session_trials(
     d = {
         'completed_trials': completed_trials,
         'total_trials': total_trials,
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
 
     if best_trials is not None:
@@ -264,7 +264,7 @@ def get_optimization_sessions(limit: int = 50, offset: int = 0, title_search: st
     
     # Apply date filter
     if date_filter and date_filter != 'all_time':
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
         
         if date_filter == '7_days':
             threshold = current_timestamp - (7 * 24 * 60 * 60 * 1000)
@@ -301,14 +301,14 @@ def update_optimization_session_state(id: str, state: dict, strategy_codes: dict
     if isinstance(state, dict) and 'form' in state and isinstance(state['form'], dict):
         for key in ['debug_mode', 'export_chart', 'export_csv', 'export_json', 'fast_mode', 'benchmark']:
             if key in state['form']:
-                state['form'][key] = jh.normalize_bool(state['form'].get(key))
+                state['form'][key] = ah.normalize_bool(state['form'].get(key))
     existing = OptimizationSession.select().where(OptimizationSession.id == id).first()
     
     if existing:
         # Update existing session's state
         d = {
             'state': json.dumps(state),
-            'updated_at': jh.now_to_timestamp(True)
+            'updated_at': ah.now_to_timestamp(True)
         }
 
         if strategy_codes is not None:
@@ -322,15 +322,15 @@ def update_optimization_session_state(id: str, state: dict, strategy_codes: dict
             'state': json.dumps(state),
             'completed_trials': 0,
             'total_trials': 0,
-            'created_at': jh.now_to_timestamp(True),
-            'updated_at': jh.now_to_timestamp(True)
+            'created_at': ah.now_to_timestamp(True),
+            'updated_at': ah.now_to_timestamp(True)
         }
         OptimizationSession.insert(**d).execute()
 
 
 def update_optimization_session_notes(id: str, title: str = None, description: str = None, strategy_codes: dict = None) -> None:
     d = {
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     OptimizationSession.update(**d).where(OptimizationSession.id == id).execute()
@@ -338,7 +338,7 @@ def update_optimization_session_notes(id: str, title: str = None, description: s
 
 def update_optimization_session_notes(id: str, title: str = None, description: str = None, strategy_codes: dict = None) -> None:
     d = {
-        'updated_at': jh.now_to_timestamp(True)
+        'updated_at': ah.now_to_timestamp(True)
     }
     
     if title is not None:
@@ -355,7 +355,7 @@ def update_optimization_session_notes(id: str, title: str = None, description: s
 
 def purge_optimization_sessions(days_old: int = None) -> int:
     try:
-        current_timestamp = jh.now_to_timestamp(True)
+        current_timestamp = ah.now_to_timestamp(True)
 
         if days_old is not None:
             days_old = int(days_old)
@@ -406,7 +406,7 @@ def get_running_optimization_session_id():
 
 
 def _reconcile_optimization_session_status(session: OptimizationSession):
-    if session.status != 'running' or jh.is_unit_testing():
+    if session.status != 'running' or ah.is_unit_testing():
         return session
 
     from algorithex.services.redis import is_process_active

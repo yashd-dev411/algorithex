@@ -1,6 +1,6 @@
 from playhouse.postgres_ext import *
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.enums import order_statuses, order_submitted_via
 from algorithex.services.db import database
 
@@ -135,7 +135,7 @@ class Order(Model):
 
     @property
     def remaining_qty(self) -> float:
-        return jh.prepare_qty(abs(self.qty) - abs(self.filled_qty), self.side)
+        return ah.prepare_qty(abs(self.qty) - abs(self.filled_qty), self.side)
 
 
 if database.is_open():

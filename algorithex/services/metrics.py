@@ -3,16 +3,16 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.models import ClosedTrade
 from algorithex.store import store
 from algorithex.routes import router
 
 
 def candles_info(candles_array: np.ndarray) -> dict:
-    period = jh.date_diff_in_days(
-        jh.timestamp_to_arrow(candles_array[0][0]),
-        jh.timestamp_to_arrow(candles_array[-1][0])) + 1
+    period = ah.date_diff_in_days(
+        ah.timestamp_to_arrow(candles_array[0][0]),
+        ah.timestamp_to_arrow(candles_array[-1][0])) + 1
 
     if period > 365:
         duration = f'{period} days ({round(period / 365, 2)} years)'
@@ -29,11 +29,11 @@ def candles_info(candles_array: np.ndarray) -> dict:
         'starting_time': candles_array[0][0],
         'finishing_time': (candles_array[-1][0] + 60_000),
         'exchange_type': trading_exchange.type,
-        'simulation_model': jh.get_config(
+        'simulation_model': ah.get_config(
             f'env.exchanges.{trading_exchange.name}.simulation_model',
             'perpetual_futures' if trading_exchange.type == 'futures' else 'spot',
         ),
-        'annualization': jh.get_config('env.metrics.annualization', 365),
+        'annualization': ah.get_config('env.metrics.annualization', 365),
         'exchange': trading_exchange.name,
     }
 
@@ -307,13 +307,13 @@ def conditional_value_at_risk(returns, sigma=1, confidence=0.95):
 
 
 def trades(trades_list: List[ClosedTrade], daily_balance: list, final: bool = True) -> dict:
-    annualization = jh.get_config('env.metrics.annualization', 365)
+    annualization = ah.get_config('env.metrics.annualization', 365)
     starting_balance = 0
     current_balance = 0
 
     for e in store.exchanges.storage:
-        starting_balance += store.exchanges.storage[e].starting_assets[jh.app_currency()]
-        current_balance += store.exchanges.storage[e].assets[jh.app_currency()]
+        starting_balance += store.exchanges.storage[e].starting_assets[ah.app_currency()]
+        current_balance += store.exchanges.storage[e].assets[ah.app_currency()]
 
     if not trades_list:
         return {

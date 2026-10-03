@@ -160,7 +160,7 @@ def _fingerprint(result: dict) -> dict:
 
 def run_scenario(scenario: dict) -> dict:
     """Build deterministic inputs, run research.backtest() and return the fingerprint."""
-    import algorithex.helpers as jh
+    import algorithex.helpers as ah
     from algorithex.research import backtest
 
     config = {
@@ -190,7 +190,7 @@ def run_scenario(scenario: dict) -> dict:
         w, c = _gen_candles(
             scenario['seed_base'] + i, scenario['days'], scenario['warmup_days']
         )
-        key = jh.key(EXCHANGE, symbol)
+        key = ah.key(EXCHANGE, symbol)
         candles[key] = {'exchange': EXCHANGE, 'symbol': symbol, 'candles': c}
         warmup_candles[key] = {'exchange': EXCHANGE, 'symbol': symbol, 'candles': w}
 

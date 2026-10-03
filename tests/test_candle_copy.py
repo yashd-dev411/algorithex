@@ -7,7 +7,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 import algorithex.mcp.tools.services.candles as candles_service
 from algorithex.controllers import candles_controller
 from algorithex.models.Candle import Candle
@@ -50,7 +50,7 @@ def sqlite_candles():
 
 def _row(exchange, symbol, timestamp, timeframe, price=100.0):
     return {
-        'id': jh.generate_unique_id(),
+        'id': ah.generate_unique_id(),
         'exchange': exchange,
         'symbol': symbol,
         'timestamp': timestamp,

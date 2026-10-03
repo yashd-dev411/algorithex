@@ -2,7 +2,7 @@ import requests
 import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import algorithex.helpers as jh
+import algorithex.helpers as ah
 from algorithex.modes.import_candles_mode.drivers.interface import CandleExchange
 from typing import Union
 from algorithex import exceptions
@@ -78,7 +78,7 @@ class BybitMain(CandleExchange):
         raise ProviderRateLimitError(f'Bybit rate limit on {self.name}')
 
     def get_starting_time(self, symbol: str) -> Union[int, None]:
-        dashless_symbol = jh.dashless_symbol(symbol)
+        dashless_symbol = ah.dashless_symbol(symbol)
         # Bybit answers `start` in ascending order, so one 1m candle from 2018 is the exact
         # listing minute. The former weekly lookup skipped the whole listing week.
         payload = {
@@ -95,7 +95,7 @@ class BybitMain(CandleExchange):
         return int(data[0][0])
 
     def fetch(self, symbol: str, start_timestamp: int, timeframe: str = '1m') -> Union[list, None]:
-        dashless_symbol = jh.dashless_symbol(symbol)
+        dashless_symbol = ah.dashless_symbol(symbol)
         interval = timeframe_to_interval(timeframe)
         payload = {
             'category': self.category,
@@ -111,7 +111,7 @@ class BybitMain(CandleExchange):
 
         return [
             {
-                'id': jh.generate_unique_id(),
+                'id': ah.generate_unique_id(),
                 'exchange': self.name,
                 'symbol': symbol,
                 'timeframe': timeframe,
@@ -128,4 +128,4 @@ class BybitMain(CandleExchange):
         response = self.session.get(self.endpoint + '/v5/market/instruments-info?limit=1000&category=' + self.category, timeout=10)
         self.validate_response(response)
         data = response.json()['result']['list']
-        return [jh.dashy_symbol(d['symbol']) for d in data]
+        return [ah.dashy_symbol(d['symbol']) for d in data]
