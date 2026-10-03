@@ -12,6 +12,7 @@ Hub on any `v*` tag, under a namespace this project does not own, using secrets
 that do not exist here. Nothing about that was visible from the code.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -209,6 +210,75 @@ def test_the_image_declares_its_ports():
     body = DOCKERFILE.read_text(encoding='utf-8')
     for port in ('9000', '9001', '9002'):
         assert port in body, f'port {port} is not declared in the Dockerfile'
+
+
+# --- the healthcheck follows the configured port --------------------------
+
+
+def test_the_healthcheck_does_not_hardcode_a_port():
+    """Found by deploying on a non-default port: the probe was pointed at 9000
+    while the app listened on APP_PORT, so a correctly working container was
+    reported permanently dead. The env template invites changing APP_PORT."""
+    code = _code_without_prose(HEALTHCHECK)
+    assert 'APP_PORT' in code
+    assert "9000/" not in code, 'the probe URL must not hardcode a port'
+
+
+def _load_healthcheck_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location('ah_healthcheck', HEALTHCHECK)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_healthcheck_prefers_the_environment_variable(monkeypatch):
+    module = _load_healthcheck_module()
+    monkeypatch.setenv('APP_PORT', '9100')
+    assert module.resolve_port() == 9100
+
+
+def test_the_healthcheck_falls_back_to_the_env_file(tmp_path, monkeypatch):
+    """A bare `docker run` injects no environment, but the app still reads the
+    .env file in its working directory."""
+    module = _load_healthcheck_module()
+    monkeypatch.delenv('APP_PORT', raising=False)
+    env_file = tmp_path / '.env'
+    env_file.write_text('# comment\nAPP_PORT=9300\nOTHER=1\n', encoding='utf-8')
+    monkeypatch.setattr(module, 'ENV_FILE', str(env_file))
+    assert module.resolve_port() == 9300
+
+
+@pytest.mark.parametrize('raw', ['', 'not-a-port', '0', '99999', None])
+def test_a_nonsense_port_falls_back_to_the_default(raw, monkeypatch):
+    module = _load_healthcheck_module()
+    if raw is None:
+        monkeypatch.delenv('APP_PORT', raising=False)
+        monkeypatch.setattr(module, 'ENV_FILE', str(HEALTHCHECK.parent / 'does-not-exist'))
+    else:
+        monkeypatch.setenv('APP_PORT', raw)
+    assert module.resolve_port() == 9000
+
+
+def test_the_healthcheck_probes_the_configured_port(tmp_path, monkeypatch):
+    """End to end on a closed port: the message must name the configured port,
+    or an operator debugging a misconfiguration is told nothing useful."""
+    import socket
+    import subprocess
+
+    with socket.socket() as probe:
+        probe.bind(('127.0.0.1', 0))
+        closed_port = probe.getsockname()[1]
+
+    env = dict(os.environ, APP_PORT=str(closed_port))
+    result = subprocess.run(
+        [sys.executable, str(HEALTHCHECK)], capture_output=True, text=True,
+        env=env, timeout=30,
+    )
+    assert result.returncode == 1
+    assert str(closed_port) in result.stderr
+    assert 'Traceback' not in result.stderr
 
 
 # --- credentials are not committed ---------------------------------------

@@ -145,6 +145,25 @@ def test_the_readme_leads_with_a_clone_and_run(readme):
     assert 'docker compose up -d' in readme
 
 
+def test_the_published_port_is_the_port_the_app_listens_on():
+    """APP_PORT is read by the app from the .env file mounted at /home/.env, so
+    it is the container's listen port. Mapping "${APP_PORT}:9000" would publish
+    host 9100 to container 9000 while the app listened on 9100 inside: healthy
+    and unreachable. Found by deploying the clone on a non-default port."""
+    compose = (DEPLOY / 'docker-compose.yml').read_text(encoding='utf-8')
+    code = '\n'.join(l for l in compose.splitlines() if not l.strip().startswith('#'))
+    # Each published port looks like "${VAR:-NNNN}:" followed by the container
+    # side, which must name the same variable.
+    mappings = re.findall(r'"(\$\{[A-Z_]+:-\d+\}):([^"]+)"', code)
+    assert mappings, 'no host:container port mappings found'
+    for host_side, container_side in mappings:
+        assert host_side == container_side, (
+            f'"{host_side}:{container_side}" publishes a host port the app does '
+            f'not listen on. The app reads this variable from the .env file, so '
+            f'both sides of the mapping must be the same expression.'
+        )
+
+
 def test_the_readme_states_that_it_cannot_trade(readme):
     """The most expensive misunderstanding available is deploying this
     believing it places orders."""

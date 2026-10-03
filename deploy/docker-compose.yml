@@ -36,13 +36,18 @@ services:
       # docker create a directory at that path.
       - .env
     ports:
-      - "${APP_PORT:-9000}:9000"
+      # Both sides are APP_PORT, because APP_PORT is what the app *listens* on
+      # -- it is read from the .env file mounted at /home/.env. Mapping
+      # "${APP_PORT}:9000" looks right and is not: setting APP_PORT=9100 would
+      # publish host 9100 to container 9000 while the app listened on 9100
+      # inside, which is a container that is healthy and unreachable.
+      - "${APP_PORT:-9000}:${APP_PORT:-9000}"
         # MCP server
-      - "${MCP_PORT:-9002}:9002"
+      - "${MCP_PORT:-9002}:${MCP_PORT:-9002}"
         # LSP
-      - "${LSP_PORT:-9001}:9001"
+      - "${LSP_PORT:-9001}:${LSP_PORT:-9001}"
         # Jupyter
-      - "${JUPYTER_PORT:-8888}:8888"
+      - "${JUPYTER_PORT:-8888}:${JUPYTER_PORT:-8888}"
     volumes:
       # The app refuses to start unless its working directory contains
       # `strategies/` and `storage/` (helpers.is_algorithex_project), so this
