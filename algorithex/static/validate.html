@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algorithex — Strategy Validation</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
+    --muted: #8b949e; --accent: #58a6ff; --pass: #3fb950; --fail: #f85149;
+    --warn: #d29922; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 26px 32px 18px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 4px; font-size: 21px; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 22px 32px 60px;
+         max-width: 1400px; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 18px; }
+  .card h2 { margin: 0 0 3px; font-size: 15px; }
+  .card .sub { margin: 0 0 14px; color: var(--muted); font-size: 12.5px; }
+  textarea, input { width: 100%; background: #0d1117; color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px;
+    font-family: var(--mono); font-size: 12.5px; }
+  textarea { min-height: 210px; resize: vertical; }
+  label { display: block; margin: 12px 0 5px; font-size: 12px; color: var(--muted); }
+  button { margin-top: 13px; background: var(--accent); color: #04121f; border: 0;
+    border-radius: 6px; padding: 9px 17px; font-weight: 600; font-size: 13px; cursor: pointer; }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .out { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 13px; }
+  .badge { display: inline-block; padding: 3px 11px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .04em; }
+  .b-pass { background: rgba(63,185,80,.15); color: var(--pass); }
+  .b-fail { background: rgba(248,81,73,.15); color: var(--fail); }
+  .b-warn { background: rgba(210,153,34,.15); color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; margin-top: 11px; font-size: 12.5px; }
+  th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; }
+  td.v { font-family: var(--mono); }
+  pre { background: #0d1117; border: 1px solid var(--border); border-radius: 6px;
+    padding: 11px; overflow-x: auto; font-family: var(--mono); font-size: 12px;
+    color: var(--fail); white-space: pre-wrap; margin: 9px 0 0; }
+  .muted { color: var(--muted); }
+  .hint { font-size: 11.5px; color: var(--muted); margin-top: 7px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Algorithex &mdash; Strategy Validation</h1>
+  <p>Falsify a strategy before it costs you money. Nothing here is a score to feel good about; every check is one more way for a result to fail.</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Look-ahead detection</h2>
+    <p class="sub">Static scan of strategy source. A strategy that reads the future is not a strategy with a flaw.</p>
+    <label for="src">Strategy source</label>
+    <textarea id="src" spellcheck="false">def go(self):
+    price = self.price
+    if self.close &gt; price:
+        return 1
+    return 0</textarea>
+    <button id="runLa">Scan for look-ahead</button>
+    <div class="out" id="laOut"></div>
+  </section>
+
+  <section class="card">
+    <h2>Backtest overfitting</h2>
+    <p class="sub">How much of the result is selection rather than signal. Paste every configuration you tried &mdash; one row each &mdash; then the winner.</p>
+    <label for="cfg">All configurations tried (JSON: list of rows of per-bar returns)</label>
+    <textarea id="cfg" spellcheck="false" style="min-height:120px">[]</textarea>
+    <label for="best">Winner's returns (JSON: list of per-bar returns)</label>
+    <textarea id="best" spellcheck="false" style="min-height:80px">[]</textarea>
+    <button id="runOf">Assess overfitting</button>
+    <div class="hint">Only the winner? That is the common mistake &mdash; the endpoint can only tell you something when you say what else lost.</div>
+    <div class="out" id="ofOut"></div>
+  </section>
+</main>
+
+<script>
+/**
+ * The dashboard keeps its session in localStorage under "main" as JSON with an
+ * `authToken` field. Read it from there rather than inventing a second key, so
+ * logging in through the dashboard is enough to unlock this page.
+ */
+function token() {
+  try {
+    const main = localStorage.getItem('main');
+    if (main) {
+      const parsed = JSON.parse(main);
+      if (parsed && parsed.authToken) return parsed.authToken;
+    }
+    return localStorage.getItem('auth_token') || '';
+  } catch (e) {
+    return '';
+  }
+}
+function badge(text, kind) {
+  return '<span class="badge b-' + kind + '">' + text + '</span>';
+}
+function esc(s) {
+  return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+
+async function post(path, body, btn, label) {
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = label;
+  const auth = token();
+  if (!auth) {
+    throw new Error('Not signed in. Open http://localhost:9000 and sign in with your dashboard password, then reload this page.');
+  }
+  try {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': auth },
+      body: JSON.stringify(body),
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch (e) { throw new Error('HTTP ' + res.status + ': ' + text.slice(0, 300)); }
+    if (!res.ok) throw new Error(data.detail || data.message || ('HTTP ' + res.status));
+    return data;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+document.getElementById('runLa').onclick = async function () {
+  const out = document.getElementById('laOut');
+  out.innerHTML = '<span class="muted">Scanning&hellip;</span>';
+  try {
+    const d = await post('/validate/lookahead', { source: document.getElementById('src').value }, this, 'Scanning…');
+    let html = '<div>' + badge(d.verdict, d.verdict === 'PASS' ? 'pass' : 'fail') +
+               ' <span class="muted">' + d.lines_examined + ' lines examined &middot; ' + esc(d.source_name) + '</span></div>';
+    if (d.errors.length) {
+      html += '<pre>' + d.errors.map(esc).join('\n\n') + '</pre>';
+    }
+    if (d.warnings.length) {
+      html += '<pre style="color:var(--warn)">' + d.warnings.map(esc).join('\n\n') + '</pre>';
+    }
+    if (d.clean && !d.warnings.length) html += '<p class="muted">No look-ahead patterns found.</p>';
+    out.innerHTML = html;
+  } catch (e) {
+    out.innerHTML = '<pre style="color:var(--warn)">' + esc(e.message) + '</pre>';
+  }
+};
+
+document.getElementById('runOf').onclick = async function () {
+  const out = document.getElementById('ofOut');
+  out.innerHTML = '<span class="muted">Assessing&hellip;</span>';
+  try {
+    const configurations = JSON.parse(document.getElementById('cfg').value);
+    const best = JSON.parse(document.getElementById('best').value);
+    const d = await post('/validate/overfitting', { configurations, best }, this, 'Assessing…');
+    const pbo = d.pbo, ds = d.deflated_sharpe, pl = d.plateau;
+    const kind = d.verdict === 'PASSES_OVERFITTING_CHECKS' ? 'pass' : 'fail';
+    let html = '<div>' + badge(d.verdict.replace('FAILS: ', 'FAILS &mdash; '), kind) + '</div>';
+    html += '<table><thead><tr><th>Check</th><th>Value</th><th>Reading</th></tr></thead><tbody>';
+    html += '<tr><td>PBO</td><td class="v">' + pbo.pbo.toFixed(3) + '</td><td>' + esc(pbo.verdict) + '</td></tr>';
+    html += '<tr><td>Deflated Sharpe</td><td class="v">' + ds.deflated_sharpe.toFixed(3) + '</td><td>' + esc(ds.verdict) + '</td></tr>';
+    html += '<tr><td>Observed Sharpe</td><td class="v">' + ds.observed_sharpe.toFixed(3) + '</td><td>before selection correction</td></tr>';
+    html += '<tr><td>Trials</td><td class="v">' + ds.n_trials + '</td><td>configurations compared</td></tr>';
+    html += '<tr><td>Parameter landscape</td><td class="v">' + (pl.robustness_score * 100).toFixed(0) + '%</td><td>' + esc(pl.verdict) + '</td></tr>';
+    html += '</tbody></table>';
+    if (d.verdict.indexOf('FAILS') === 0) {
+      html += '<p class="hint">Read together: ' + esc(d.verdict.slice(7)) + '</p>';
+    }
+    out.innerHTML = html;
+  } catch (e) {
+    out.innerHTML = '<pre style="color:var(--warn)">' + esc(e.message) + '</pre>';
+  }
+};
+</script>
+</body>
+</html>

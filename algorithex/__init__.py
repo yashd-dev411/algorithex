@@ -37,16 +37,67 @@ async def lifespan(app):
 
 fastapi_app.router.lifespan_context = lifespan
 
+class CachedStaticFiles(StaticFiles):
+    """
+    Static assets with real cache headers.
+
+    Starlette's ``StaticFiles`` sends no ``Cache-Control`` at all, so browsers
+    fall back to heuristic revalidation and re-fetch on every navigation. The
+    dashboard ships 483 content-hashed JS chunks totalling roughly 24 MB, and
+    re-fetching all of that each time is the largest single source of the
+    "everything is slow to load" complaint.
+
+    Files under ``/_nuxt/`` carry a content hash in their filename, so a given
+    URL can never mean different bytes -- those are safe to cache indefinitely.
+    Everything else (``index.html``, ``help.html``) must revalidate, otherwise
+    a rebuilt frontend would never reach anyone with the page already open.
+    """
+
+    IMMUTABLE_PREFIX = '_nuxt/'
+    IMMUTABLE_CACHE = 'public, max-age=31536000, immutable'
+    REVALIDATE_CACHE = 'no-cache'
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            # Starlette hands us a path *relative to the mount*, with no leading
+            # slash, and built from os.sep -- so it is '_nuxt/a.js' on Linux and
+            # '_nuxt\\a.js' on Windows. Normalise before comparing, or the
+            # immutable branch silently never matches.
+            relative = path.replace('\\', '/').lstrip('/')
+            response.headers['Cache-Control'] = (
+                self.IMMUTABLE_CACHE
+                if relative.startswith(self.IMMUTABLE_PREFIX)
+                else self.REVALIDATE_CACHE
+            )
+        return response
+
+
 # load homepage
 @fastapi_app.get("/")
 async def index():
-    return FileResponse(f"{ALGORITHEX_DIR}/static/index.html")
+    # Must revalidate: this HTML is what points at the current asset hashes,
+    # so caching it is how a rebuilt frontend silently fails to appear.
+    response = FileResponse(f"{ALGORITHEX_DIR}/static/index.html")
+    response.headers['Cache-Control'] = CachedStaticFiles.REVALIDATE_CACHE
+    return response
 
 
 # Algorithex white-label: local help page so no link leaves the project.
 @fastapi_app.get("/help")
 async def help_page():
-    return FileResponse(f"{ALGORITHEX_DIR}/static/help.html")
+    response = FileResponse(f"{ALGORITHEX_DIR}/static/help.html")
+    response.headers['Cache-Control'] = CachedStaticFiles.REVALIDATE_CACHE
+    return response
+
+
+# Algorithex: the strategy validation workbench. Reachable without rebuilding
+# the Nuxt bundle, which is why it is served as a standalone page.
+@fastapi_app.get("/validate")
+async def validate_page():
+    response = FileResponse(f"{ALGORITHEX_DIR}/static/validate.html")
+    response.headers['Cache-Control'] = CachedStaticFiles.REVALIDATE_CACHE
+    return response
 
 
 
@@ -77,6 +128,7 @@ from algorithex.controllers.period_templates_controller import router as period_
 from algorithex.controllers.route_templates_controller import router as route_templates_router
 from algorithex.controllers.ai_model_controller import router as ai_model_router
 from algorithex.controllers.data_provider_credentials_controller import router as data_provider_credentials_router
+from algorithex.controllers.validation_controller import router as validation_router
 from algorithex.services.env import is_test_env
 
 # register routers
@@ -102,6 +154,7 @@ fastapi_app.include_router(period_templates_router)
 fastapi_app.include_router(route_templates_router)
 fastapi_app.include_router(ai_model_router)
 fastapi_app.include_router(data_provider_credentials_router)
+fastapi_app.include_router(validation_router)
 
 if is_test_env():
     from algorithex.controllers.e2e_controller import router as e2e_router
@@ -120,4 +173,4 @@ fastapi_app.include_router(live_router)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Static Files (Must be loaded at the end to prevent overlapping with API endpoints)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-fastapi_app.mount("/", StaticFiles(directory=f"{ALGORITHEX_DIR}/static"), name="static")
+fastapi_app.mount("/", CachedStaticFiles(directory=f"{ALGORITHEX_DIR}/static"), name="static")
