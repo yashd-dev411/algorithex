@@ -375,6 +375,93 @@ Then open <http://localhost:9000>. The dashboard password is `PASSWORD` in `my-b
 The MCP server is at <http://localhost:9002/mcp>; see [AGENTS.md](AGENTS.md) for the
 strategy-authoring workflow it exposes.
 
+## Deploying
+
+Algorithex ships as a container image. Everything below assumes Docker; nothing
+requires Kubernetes or any particular host.
+
+### From the published image
+
+The image is published to GitHub Container Registry under this repository's own
+namespace, so it needs no credentials for the owner:
+
+```bash
+docker pull ghcr.io/<owner>/<repo>:latest
+```
+
+GHCR packages are private by default. Anyone else pulling needs the package set
+to public in the repository's package settings, or a token with `read:packages`.
+
+Then use the workspace repository's compose file, which brings up the app,
+Postgres and Redis together:
+
+```bash
+cd my-bot/docker
+cp ../.env.example ../.env     # then edit it; see below
+docker compose up -d
+docker compose ps              # wait until `algorithex` reads healthy
+```
+
+The dashboard is on <http://localhost:9000>. Sign in with the `PASSWORD` from
+`.env`.
+
+### Configuration
+
+Copy `my-bot/.env.example` to `my-bot/.env` and edit it. Every value there is a
+local default; the two that matter before this is reachable by anything other
+than you are `PASSWORD` and `POSTGRES_PASSWORD`. Compose also reads
+`POSTGRES_PASSWORD` from the environment, so a secret manager can supply it
+without touching a file.
+
+The app is gated on Postgres and Redis passing their healthchecks before it
+starts, so a cold start cannot race the database. The image itself declares a
+healthcheck too, which means a bare `docker run` gets the same behaviour:
+
+```bash
+docker run -p 9000:9000 ... ghcr.io/<owner>/<repo>:latest
+```
+
+### Building from source
+
+```bash
+cd my-bot/docker
+docker compose build
+```
+
+### Continuous integration
+
+Three workflows run in `.github/workflows`:
+
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| `python-package.yml` | push/PR to `master` | Runs the test suite on Python 3.11 and 3.12 against real Postgres and Redis services. |
+| `docker-publish.yml` | push to `master`, release, manual | Publishes `linux/amd64` on every push; `linux/amd64` + `linux/arm64` on a release or manual run. |
+| `codeql-analysis.yml` | push/PR to `master`, weekly | Static analysis for Python and JavaScript. |
+
+Nothing in CI publishes to PyPI or Docker Hub. The image goes to GHCR only, into
+`ghcr.io/${{ github.repository }}`, so the workflow is correct for whichever
+GitHub account it is pushed to without being edited.
+
+The Python matrix is 3.11 and 3.12 because those are the two the suite has
+actually been run on: 3.11 is the image's base, 3.12 is what it is run against
+interactively. Adding a version means running the suite on it first.
+
+### What this release is and is not
+
+It is a backtester with a read-only live market view. It **cannot place,
+modify or cancel orders** — there is no order-placement code path, no request
+signing, and no code anywhere that accepts an API key. The live-trading plugin
+is not included, so the Live page's session runner is a local simulation stub.
+
+### A note on the frontend
+
+The dashboard ships as a compiled bundle with no source in this repository. The
+live market panel inside the Live page is mounted by
+`algorithex/static/algorithex-live-feed.js`, which `index.html` loads. If the
+frontend bundle is ever rebuilt, `index.html` is regenerated and that script tag
+is lost; the panel disappears silently. `tests/test_live_feed_injection.py`
+fails when that happens, but the fix is to re-add the one line.
+
 ## Screenshots
 
 ![Strategy editor and chart](assets/screenshots/strategy.jpg)

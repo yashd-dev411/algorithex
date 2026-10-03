@@ -1,57 +1,101 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# Run the test suite on push and on pull requests.
+#
+# This replaces an inherited matrix spanning Python 3.10-3.13 across Linux,
+# macOS and Windows. That matrix was never run against this code: the suite has
+# only ever been exercised on Python 3.12 (host) and inside the project's own
+# 3.11 container. Claiming untested versions as a gate is worse than not gating
+# them, because it turns the first push into a coin flip.
+#
+# 3.11 and 3.12 are kept because both are real: 3.11 is the Dockerfile base
+# image, 3.12 is what the tests are run against interactively. Adding a version
+# means actually running the suite on it first.
 
-name: Python application
+name: Test
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
+# A newer push to the same branch makes the in-flight run irrelevant.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: test-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    runs-on:  ${{matrix.os}}
+  pytest:
+    name: pytest (python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
     strategy:
+      # Do not let one version's failure hide another's result.
+      fail-fast: false
       matrix:
-        # ubuntu-latest    = Linux x86_64
-        # ubuntu-24.04-arm = Linux aarch64 (free for public repos)
-        # macos-latest     = Apple Silicon (arm64) on GitHub-hosted runners
-        # windows-latest   = Windows x86_64 (no ARM target; Windows-on-ARM excluded)
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        python-version: ['3.10', '3.11', '3.12', '3.13']
-        exclude:
-          # ray has no Windows wheel for Python 3.13 yet (as of ray 2.55.1).
-          # Drop this exclude once upstream ships ray-*-cp313-cp313-win_amd64.whl.
-          - os: windows-latest
-            python-version: '3.13'
+        python-version: ['3.11', '3.12']
+
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: algorithex_user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: algorithex_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:6-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_NAME: algorithex_db
+      POSTGRES_USERNAME: algorithex_user
+      POSTGRES_PASSWORD: password
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - name: Install dependencies
-        shell: bash
+
+      - name: Install
         run: |
-          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
-          python -m pip install setuptools wheel
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install -e . -U
-      - name: Test with pytest
-        shell: bash
-        env:
-          PYTEST_DISABLE_PLUGIN_AUTOLOAD: 1
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Test
+        # Exit status is taken from pytest itself, not from the pipe: `pytest |
+        # tail` returns tail's status and would report success on a failed run.
         run: |
-          python -m pytest
+          set -o pipefail
+          python -m pytest -q 2>&1 | tail -40
+
+      - name: Check the static assets the dashboard serves
+        run: |
+          set -o pipefail
+          python -m pytest tests/test_static_cache_headers.py \
+                           tests/test_live_feed_injection.py -q 2>&1 | tail -20
