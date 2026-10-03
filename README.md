@@ -543,10 +543,11 @@ Signed in and idle. Navigation on the left, live-session state below.
 
 ### Live market data — read-only, from real exchanges
 
-`/live` pulls public ticker, depth and kline data from **Binance** and
-**Bybit**. The panel above the chart is the same code mounted inside the
-dashboard's own Live page, so this feature is visible in two places without
-rebuilding the frontend.
+`/live` is a standalone page: it pulls public ticker, depth and kline data from
+**Binance** and **Bybit** and renders it as a price chart beside a 20-level
+order book. The same panel is also mounted inside the dashboard's own Live
+page (next screenshot), so the feature is reachable both ways without
+rebuilding the frontend bundle.
 
 ![Live market data from Binance with candles and a 20-level order book](assets/screenshots/02-live-market.png)
 
