@@ -41,8 +41,16 @@
            gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
   .stat .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
   .stat .v { font-family: var(--mono); font-size: 15px; margin-top: 3px; }
-  #chart { width: 100%; height: 220px; display: block; margin-top: 14px;
+  .chartwrap { position: relative; margin-top: 14px; }
+  #chart { width: 100%; height: 220px; display: block;
            background: #0d1117; border: 1px solid var(--border); border-radius: 7px; }
+  /* The SVG stretches with preserveAspectRatio="none" so the price line fills the
+     width, which horizontally squashes anything drawn inside it. The axis labels
+     are therefore HTML positioned over the chart, not SVG text. */
+  .chartwrap .axis { position: absolute; left: 9px; font-family: var(--mono);
+                     font-size: 11px; color: var(--muted); pointer-events: none; }
+  .chartwrap .axis.hi { top: 6px; }
+  .chartwrap .axis.lo { bottom: 6px; }
   .book { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;
           font-family: var(--mono); font-size: 12px; }
   .book h3 { margin: 0 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase;
@@ -103,7 +111,11 @@
       <p class="sub" id="pairSub">Waiting for data.</p>
       <div class="price" id="last">&mdash;</div>
       <div class="stats" id="stats"></div>
-      <svg id="chart" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg>
+      <div class="chartwrap">
+        <svg id="chart" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg>
+        <div class="axis hi" id="axisHi"></div>
+        <div class="axis lo" id="axisLo"></div>
+      </div>
       <div class="hint" id="chartHint"></div>
     </section>
 
@@ -153,6 +165,18 @@ function px(n) {
   const a = Math.abs(n);
   const dp = a >= 1000 ? 2 : a >= 1 ? 4 : 8;
   return fmt(n, dp);
+}
+/**
+ * A spread is a *difference* on a large price, so it must not be formatted by
+ * its own magnitude: 0.01 on an 85,000 instrument is a real, ordinary spread,
+ * but significant-digits-by-own-value renders it "0.01000000". Fixed significant
+ * digits read correctly at every price level instead.
+ */
+function sig(n, digits) {
+  if (!isFinite(n)) return '—';
+  const v = Number(n);
+  if (v === 0) return '0';
+  return String(Number(v.toPrecision(digits === undefined ? 4 : digits)));
 }
 let timer = null;
 
@@ -205,7 +229,7 @@ function render(d) {
 
   document.getElementById('stats').innerHTML = [
     ['Bid', px(t.bid), ''], ['Ask', px(t.ask), ''],
-    ['Mid', px(t.mid), ''], ['Spread', px(t.spread), ''],
+    ['Mid', px(t.mid), ''], ['Spread', sig(t.spread, 4), ''],
     ['Spread bps', fmt(t.spread_bps, 4), ''],
     ['24h', (t.change_24h_pct >= 0 ? '+' : '') + fmt(t.change_24h_pct, 2) + '%', dir],
     ['24h quote vol', fmt(t.quote_volume_24h, 0), ''],
@@ -219,7 +243,7 @@ function render(d) {
   drawBook('bids', b.bids, 'up');
   drawBook('asks', b.asks, 'down');
   document.getElementById('midRow').innerHTML =
-    '<span class="muted">mid ' + px(b.mid) + ' · spread ' + px(b.spread) + '</span>' +
+    '<span class="muted">mid ' + px(b.mid) + ' · spread ' + sig(b.spread, 4) + '</span>' +
     '<span class="' + (b.crossed ? 'down' : 'muted') + '">' +
     (b.crossed ? 'CROSSED' : b.depth + ' levels each side') + '</span>';
 
@@ -232,7 +256,12 @@ function render(d) {
 function drawChart(closes) {
   const svg = document.getElementById('chart');
   const W = 1000, H = 220, P = 8;
-  if (!closes || closes.length < 2) { svg.innerHTML = ''; return; }
+  const hiLabel = document.getElementById('axisHi');
+  const loLabel = document.getElementById('axisLo');
+  if (!closes || closes.length < 2) {
+    svg.innerHTML = ''; hiLabel.textContent = ''; loLabel.textContent = '';
+    return;
+  }
   const lo = Math.min.apply(null, closes), hi = Math.max.apply(null, closes);
   const span = (hi - lo) || (hi * 0.0001) || 1;
   const x = i => P + (i * (W - 2 * P)) / (closes.length - 1);
@@ -248,9 +277,10 @@ function drawChart(closes) {
     '<stop offset="0%" stop-color="' + stroke + '" stop-opacity="0.28"/>' +
     '<stop offset="100%" stop-color="' + stroke + '" stop-opacity="0"/></linearGradient></defs>' +
     '<path d="' + area + '" fill="url(#' + gid + ')"/>' +
-    '<path d="' + line + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" vector-effect="non-scaling-stroke"/>' +
-    '<text x="' + P + '" y="' + (P + 12) + '" fill="#8b949e" font-size="12" font-family="monospace">' + px(hi) + '</text>' +
-    '<text x="' + P + '" y="' + (H - P - 2) + '" fill="#8b949e" font-size="12" font-family="monospace">' + px(lo) + '</text>';
+    '<path d="' + line + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" vector-effect="non-scaling-stroke"/>';
+  // Labels live outside the SVG so the horizontal stretch cannot distort them.
+  hiLabel.textContent = px(hi);
+  loLabel.textContent = px(lo);
 }
 
 function drawBook(id, levels, kind) {
