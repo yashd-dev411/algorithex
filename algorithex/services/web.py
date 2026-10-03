@@ -1,0 +1,448 @@
+from typing import List, Dict, Optional
+from datetime import datetime
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from pydantic import BaseModel, Field, model_validator
+
+
+fastapi_app = FastAPI()
+
+origins = [
+    "*",
+]
+
+fastapi_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+fastapi_app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=5)
+
+
+class BacktestRequestJson(BaseModel):
+    id: str
+    exchange: str
+    routes: List[Dict[str, str]]
+    data_routes: List[Dict[str, str]]
+    config: dict
+    start_date: str
+    finish_date: str
+    debug_mode: bool
+    export_csv: bool
+    export_json: bool
+    export_chart: bool
+    fast_mode: bool
+    benchmark: bool
+    theme: str = 'light'
+    state: dict
+
+    @model_validator(mode='after')
+    def validate_date_range(self):
+        """Reject malformed or reversed ranges before a worker is queued."""
+        try:
+            start = datetime.strptime(self.start_date, '%Y-%m-%d')
+            finish = datetime.strptime(self.finish_date, '%Y-%m-%d')
+        except ValueError:
+            raise ValueError('start_date and finish_date must use the YYYY-MM-DD format')
+
+        if start >= finish:
+            raise ValueError('start_date must be earlier than finish_date')
+        return self
+
+
+class OptimizationRequestJson(BaseModel):
+    id: Optional[str] = None
+    exchange: str
+    routes: List[Dict[str, str]]
+    data_routes: List[Dict[str, str]]
+    config: dict
+    training_start_date: str
+    training_finish_date: str
+    testing_start_date: str
+    testing_finish_date: str
+    optimal_total: int
+    fast_mode: bool
+    cpu_cores: int
+    state: dict
+
+
+class ImportCandlesRequestJson(BaseModel):
+    id: str
+    exchange: str
+    symbol: str
+    start_date: str
+
+
+class ExchangeSupportedSymbolsRequestJson(BaseModel):
+    exchange: str
+
+
+class SearchExchangeSymbolsRequestJson(BaseModel):
+    exchange: str
+    query: str
+    limit: int = Field(default=50, ge=1, le=200)
+
+
+class CancelRequestJson(BaseModel):
+    id: str
+
+
+class LiveRequestJson(BaseModel):
+    id: str
+    config: dict
+    exchange: str
+    exchange_api_key_id: str
+    notification_api_key_id: str
+    routes: List[Dict[str, str]]
+    data_routes: List[Dict[str, str]]
+    debug_mode: bool
+    paper_mode: bool
+
+
+class LiveCancelRequestJson(BaseModel):
+    id: str
+    paper_mode: bool
+
+
+class GetCandlesRequestJson(BaseModel):
+    id: str
+    exchange: str
+    symbol: str
+    timeframe: str
+
+
+class GetLogsRequestJson(BaseModel):
+    id: str
+    type: str
+    start_time: int
+
+
+class GetStrategyChartsRequestJson(BaseModel):
+    id: str
+
+
+class GetLiveSessionChartDataRequestJson(BaseModel):
+    exchange: str
+    symbol: str
+    timeframe: str
+    anchor_time: Optional[int] = None
+    candle_count: int = 1000
+    full_history: bool = False
+
+
+class GetBacktestSessionChartDataRequestJson(BaseModel):
+    exchange: str
+    symbol: str
+    timeframe: str
+
+
+class GetOrdersRequestJson(BaseModel):
+    id: str
+    session_id: str
+
+
+class StoreExchangeApiKeyRequestJson(BaseModel):
+    exchange: str
+    name: str
+    api_key: str
+    api_secret: str
+    additional_fields: Optional[dict] = None
+    general_notifications_id: Optional[str] = None
+    error_notifications_id: Optional[str] = None
+
+
+class StoreNotificationApiKeyRequestJson(BaseModel):
+    name: str
+    driver: str
+    fields: dict
+
+
+class DeleteExchangeApiKeyRequestJson(BaseModel):
+    id: str
+
+
+class DeleteNotificationApiKeyRequestJson(BaseModel):
+    id: str
+
+
+class StoreAiModelRequestJson(BaseModel):
+    name: str
+    provider: str
+    base_url: str
+    api_key: str
+    model_id: str
+
+
+class DeleteAiModelRequestJson(BaseModel):
+    id: str
+
+
+class ConfigRequestJson(BaseModel):
+    current_config: dict
+
+
+class LoginRequestJson(BaseModel):
+    password: str
+
+
+class LoginAlgorithexTradeRequestJson(BaseModel):
+    email: str
+    password: str
+
+
+class NewStrategyRequestJson(BaseModel):
+    name: str
+
+
+class GetStrategyRequestJson(BaseModel):
+    name: str
+
+
+class SaveStrategyRequestJson(BaseModel):
+    name: str
+    content: str
+
+
+class DeleteStrategyRequestJson(BaseModel):
+    name: str
+
+
+class ForkStrategyRequestJson(BaseModel):
+    new_name: str
+    content: str
+
+
+class ImportStrategyRequestJson(BaseModel):
+    slug: str
+
+
+class FeedbackRequestJson(BaseModel):
+    description: str
+    email: Optional[str] = None
+
+
+class ReportExceptionRequestJson(BaseModel):
+    description: str
+    traceback: str
+    mode: str
+    attach_logs: bool
+    session_id: Optional[str] = None
+    email: Optional[str] = None
+
+
+class HelpSearchRequestJson(BaseModel):
+    query: str
+
+
+class DeleteCandlesRequestJson(BaseModel):
+    exchange: str
+    symbol: str
+
+
+class PurgeCandlesRequestJson(BaseModel):
+    exchanges: List[str]
+
+
+class CopyCandlesRequestJson(BaseModel):
+    exchange: str
+    symbol: str
+    target_exchange: str
+    # Defaults to the source symbol; override it when the target market uses another quote (USD vs USDT).
+    target_symbol: Optional[str] = None
+    delete_source: bool = False
+
+
+class UpdateOptimizationSessionStateRequestJson(BaseModel):
+    id: str
+    state: dict
+
+
+class UpdateOptimizationSessionStatusRequestJson(BaseModel):
+    id: str
+    status: str
+
+
+class TerminateOptimizationRequestJson(BaseModel):
+    id: str
+
+
+class UpdateOptimizationSessionNotesRequestJson(BaseModel):
+    id: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    strategy_codes: Optional[dict] = None
+
+
+class GetOptimizationSessionsRequestJson(BaseModel):
+    limit: int = 50
+    offset: int = 0
+    title_search: Optional[str] = None
+    status_filter: Optional[str] = None
+    date_filter: Optional[str] = None
+
+
+class UpdateBacktestSessionStateRequestJson(BaseModel):
+    id: str
+    state: dict
+
+
+class GetBacktestSessionsRequestJson(BaseModel):
+    limit: int = 50
+    offset: int = 0
+    title_search: Optional[str] = None
+    status_filter: Optional[str] = None
+    date_filter: Optional[str] = None
+
+
+class UpdateBacktestSessionNotesRequestJson(BaseModel):
+    id: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    strategy_codes: Optional[dict] = None
+
+
+class GetLiveSessionsRequestJson(BaseModel):
+    limit: int = 50
+    offset: int = 0
+    title_search: Optional[str] = None
+    status_filter: Optional[str] = None
+    date_filter: Optional[str] = None
+    mode_filter: Optional[str] = None
+
+
+class UpdateLiveSessionNotesRequestJson(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    strategy_codes: Optional[dict] = None
+
+
+class UpdateLiveSessionStateRequestJson(BaseModel):
+    id: str
+    state: dict
+
+
+class GetEquityCurveRequestJson(BaseModel):
+    session_id: str
+    from_ms: Optional[int] = None
+    to_ms: Optional[int] = None
+    timeframe: str = 'auto'
+    max_points: int = 1000
+
+
+class MonteCarloRequestJson(BaseModel):
+    id: Optional[str] = None
+    exchange: str
+    routes: List[Dict[str, str]]
+    data_routes: List[Dict[str, str]]
+    config: dict
+    start_date: str
+    finish_date: str
+    run_trades: bool
+    run_candles: bool
+    num_scenarios: int
+    fast_mode: bool
+    cpu_cores: int
+    pipeline_type: Optional[str] = 'moving_block_bootstrap'
+    pipeline_params: Optional[dict] = None
+    state: dict
+
+
+class UpdateMonteCarloSessionStateRequestJson(BaseModel):
+    id: str
+    state: dict
+
+
+class TerminateMonteCarloRequestJson(BaseModel):
+    id: str
+
+
+class CancelMonteCarloRequestJson(BaseModel):
+    id: str
+
+
+class UpdateMonteCarloSessionNotesRequestJson(BaseModel):
+    id: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    strategy_codes: Optional[dict] = None
+
+
+class GetMonteCarloSessionsRequestJson(BaseModel):
+    limit: int = 50
+    offset: int = 0
+    title_search: Optional[str] = None
+    status_filter: Optional[str] = None
+    date_filter: Optional[str] = None
+
+
+class GetOrdersHistoryRequestJson(BaseModel):
+    limit: int = 50
+    offset: int = 0
+    id_search: Optional[str] = None
+    status_filter: Optional[str] = None
+    symbol_filter: Optional[str] = None
+    date_filter: Optional[str] = None
+    exchange_filter: Optional[str] = None
+    type_filter: Optional[str] = None
+    side_filter: Optional[str] = None
+
+
+class GetTradesHistoryRequestJson(BaseModel):
+    limit: int = 50
+    offset: int = 0
+    id_search: Optional[str] = None
+    status_filter: Optional[str] = None
+    symbol_filter: Optional[str] = None
+    date_filter: Optional[str] = None
+    exchange_filter: Optional[str] = None
+    type_filter: Optional[str] = None
+    
+
+class ImportApiKeyRequestJson(BaseModel):
+    content: str
+
+
+class SignificanceTestRequestJson(BaseModel):
+    id: Optional[str] = None
+    exchange: str
+    routes: List[Dict[str, str]]
+    data_routes: List[Dict[str, str]]
+    config: dict
+    start_date: str
+    finish_date: str
+    n_simulations: int = 1000
+    random_seed: Optional[int] = None
+    theme: str = 'light'
+    state: dict
+
+
+class CancelSignificanceTestRequestJson(BaseModel):
+    id: str
+
+
+class TerminateSignificanceTestRequestJson(BaseModel):
+    id: str
+
+
+class UpdateSignificanceTestSessionStateRequestJson(BaseModel):
+    id: str
+    state: dict
+
+
+class UpdateSignificanceTestSessionNotesRequestJson(BaseModel):
+    id: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    strategy_codes: Optional[dict] = None
+
+
+class GetSignificanceTestSessionsRequestJson(BaseModel):
+    limit: int = 50
+    offset: int = 0
+    title_search: Optional[str] = None
+    status_filter: Optional[str] = None
+    date_filter: Optional[str] = None

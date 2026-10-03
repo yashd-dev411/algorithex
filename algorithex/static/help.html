@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algorithex — Local Help</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<style>
+:root{--v:#8B5CF6;--c:#22D3EE;--bg:#070A14;--panel:#0E1428;--line:rgba(139,92,246,.22);--tx:#E5E7EB;--mut:#9CA3AF}
+*{box-sizing:border-box}
+body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(42rem 30rem at 12% -6%,rgba(139,92,246,.16),transparent 60%),radial-gradient(40rem 30rem at 88% 4%,rgba(34,211,238,.12),transparent 60%),var(--bg);color:var(--tx);max-width:900px;margin:0 auto;padding:40px 20px 80px;line-height:1.65}
+header{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+header img{width:52px;height:52px;filter:drop-shadow(0 0 12px rgba(139,92,246,.7))}
+h1{font-size:30px;margin:0;background:linear-gradient(90deg,#A78BFA,#22D3EE);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mut);margin-top:4px}
+nav{position:sticky;top:0;background:rgba(7,10,20,.9);backdrop-filter:blur(8px);padding:10px 0;margin:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);z-index:5}
+nav a{color:#C4B5FD;text-decoration:none;margin-right:18px;font-size:14px}
+nav a:hover{color:var(--c)}
+h2{font-size:21px;margin:38px 0 10px;color:#fff}
+h2::before{content:"◆ ";color:var(--v);font-size:14px}
+.card{border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:16px 0;background:linear-gradient(180deg,rgba(139,92,246,.07),rgba(139,92,246,0) 40%),var(--panel);box-shadow:0 12px 40px -18px rgba(139,92,246,.45)}
+code{background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.25);padding:1px 7px;border-radius:7px;font-size:13.5px;color:#DDD6FE}
+pre{background:#05070F;border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid rgba(139,92,246,.15)}
+th{color:#C4B5FD;font-weight:600}
+tr td:first-child{color:#fff;font-weight:600}
+a{color:#67E8F9}
+.warn{border-left:3px solid #F59E0B;padding:10px 16px;background:rgba(245,158,11,.08);border-radius:0 10px 10px 0;margin:14px 0}
+.ok{border-left:3px solid #34D399;padding:10px 16px;background:rgba(52,211,153,.08);border-radius:0 10px 10px 0;margin:14px 0}
+footer{margin-top:50px;color:var(--mut);font-size:13px}
+kbd{background:#1F2547;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+<img src="/logo.svg" alt="Algorithex logo">
+<div><h1>Algorithex Help</h1><div class="sub">Your self-hosted trading research station — no account, no license key, everything unlocked.</div></div>
+</header>
+<nav>
+<a href="#start">Quick start</a><a href="#candles">Candles</a><a href="#backtest">Backtest</a><a href="#rst">Rule test</a><a href="#mc">Monte Carlo</a><a href="#optimize">Optimize</a><a href="#paper">Paper</a><a href="#strategy">Strategies</a><a href="#trouble">Troubleshooting</a><a href="#files">Files</a>
+</nav>
+
+<h2 id="start">Quick start (5 steps)</h2>
+<div class="card"><ol>
+<li><strong>Import candles</strong> for your exchange + symbol with a start date <strong>≥ 2 months before</strong> your test window. Wait for <code>finished</code>.</li>
+<li><strong>Write or pick a strategy</strong> in <code>strategies/</code> (copy <code>ExampleStrategy</code>).</li>
+<li><strong>Backtest</strong> it on your date range. Sharpe &gt; 1 with 100+ trades is worth a look.</li>
+<li><strong>Rule-test the entry</strong> (one route) — keep it only if <code>p &lt; 0.05</code>.</li>
+<li><strong>Monte Carlo (candles, 200 scenarios)</strong> — trust it if <code>original ≈ median</code>, distrust if <code>original &gt; best_5</code>.</li>
+</ol></div>
+
+<h2 id="candles">Candles &amp; warm-up — read this first</h2>
+<p>Every run needs your test range <em>plus</em> 240 warm-up candles <strong>before</strong> the start date (indicator warm-up). How far back that is depends on your timeframe:</p>
+<table><tr><th>Timeframe</th><th>240 candles ≈</th><th>Safe import head-start</th></tr>
+<tr><td>1m</td><td>4 hours</td><td>1 day</td></tr>
+<tr><td>15m</td><td>2.5 days</td><td>1 week</td></tr>
+<tr><td>1h</td><td>10 days</td><td>1 month</td></tr>
+<tr><td>4h</td><td>40 days</td><td>2 months</td></tr>
+<tr><td>1D</td><td>240 days</td><td>9 months</td></tr></table>
+<div class="ok"><strong>Rule of thumb:</strong> import starting <strong>2 months before</strong> your start date (9 months if you trade the daily). Re-running an import is safe — existing candles are kept, only gaps are filled.</div>
+
+<h2 id="backtest">Backtest</h2>
+<div class="card"><ul>
+<li>Multiple routes allowed, but each <strong>exchange–symbol pair only once</strong> (use separate backtests per timeframe of the same symbol).</li>
+<li><code>finish_date</code> must be after <code>start_date</code>; use yesterday-or-earlier, never the future.</li>
+<li>Trustworthy minimums: <strong>100+ trades</strong>, tested across more than one period, fees left on.</li>
+<li>Key metrics: Sharpe (risk-adjusted return), Calmar (return vs worst drawdown), win-rate <em>with</em> payoff ratio — win-rate alone means nothing.</li>
+</ul></div>
+
+<h2 id="rst">Rule significance test (entry edge only)</h2>
+<p>Checks whether your <strong>entry timing predicts the next bar</strong> better than chance. <strong>Exactly one route.</strong> Use 1–2 years of data and <code>n_simulations ≥ 2000</code>.</p>
+<table><tr><th>p-value</th><th>Verdict</th></tr>
+<tr><td><code>p &lt; 0.05</code></td><td>Entry edge supported — develop the strategy.</td></tr>
+<tr><td><code>0.05 – 0.10</code></td><td>Borderline — refine the signal or widen the window.</td></tr>
+<tr><td><code>p &gt; 0.10</code></td><td>No reliable next-bar edge. (A profitable multi-bar strategy can still fail this and pass backtest/Monte Carlo.)</td></tr></table>
+<div class="warn">It does <strong>not</strong> test exits, stops, targets, sizing, or fees. Always report <code>p_value</code> with <code>observed_mean</code>, <code>n_observations</code>, <code>n_simulations</code>.</div>
+
+<h2 id="mc">Monte Carlo (overfit detector)</h2>
+<div class="card"><ul>
+<li><strong>Candles mode</strong> (default, 200 scenarios): resamples history — answers <em>"was I lucky?"</em>.</li>
+<li><strong>Trades mode</strong>: only shuffles trade order — informs <strong>max drawdown only</strong>, never overfit. Leave off unless asked.</li>
+<li>Compare on Sharpe: <code>original ≈ median</code> → <strong>good</strong>; <code>original &lt; median</code> → <strong>great</strong>; <code>original &gt; best_5</code> → <strong>overfit, reject</strong>.</li>
+<li>Then check the downside tail: if you can't stomach <code>worst_5</code> drawdown, don't trade it.</li>
+</ul></div>
+
+<h2 id="optimize">Optimization</h2>
+<p>Expose knobs via <code>hyperparameters()</code>, keep the search space small (2–4 params), and always validate winners <strong>out-of-sample</strong> (different dates) — in-sample winners are guilty of overfitting until proven otherwise.</p>
+<pre>def hyperparameters(self):
+    return [
+        {'name': 'slow_period', 'type': int, 'min': 100, 'max': 250, 'default': 200},
+        {'name': 'fast_period', 'type': int, 'min': 10, 'max': 100, 'default': 50},
+    ]</pre>
+
+<h2 id="paper">Paper trading</h2>
+<p>Paper sessions start instantly with no plugin and are recorded as <code>local-simulated</code>. They track intent locally — <strong>real exchange execution is not wired yet</strong>, so validate with backtests + Monte Carlo first.</p>
+
+<h2 id="strategy">Strategy crash course</h2>
+<pre>from algorithex.strategies import Strategy
+import algorithex.indicators as ta
+from algorithex import utils
+
+class GoldenCross(Strategy):
+    def should_long(self):
+        return ta.ema(self.candles, 8) &gt; ta.ema(self.candles, 21)
+
+    def go_long(self):
+        qty = utils.size_to_qty(self.balance * 0.05, self.price)  # risk 5%
+        self.buy = qty, self.price
+
+    def on_open_position(self, order):
+        # exits belong here: bracket the open position
+        self.take_profit = self.position.qty, self.price * 1.2
+        self.stop_loss = self.position.qty, self.price * 0.9</pre>
+<ul>
+<li>Never use fixed quantities — size with <code>size_to_qty</code> / <code>risk_to_qty</code>.</li>
+<li>On <strong>spot</strong>, <code>should_short</code> must return <code>False</code>; set exits in <code>on_open_position</code>.</li>
+<li>No look-ahead tricks needed — the engine handles it. Don't shift indicators back a candle.</li>
+</ul>
+
+<h2 id="trouble">Troubleshooting (exact errors)</h2>
+<table><tr><th>Error</th><th>Fix</th></tr>
+<tr><td><code>CandleNotFoundInDatabase … between A and B</code></td><td>Import candles covering A→B <em>plus</em> the warm-up head-start above, wait for <code>finished</code>, re-run.</td></tr>
+<tr><td><code>InvalidRoutes: each exchange-symbol pair can be traded only once</code></td><td>Split into separate runs — one route per exchange–symbol per backtest.</td></tr>
+<tr><td><code>InvalidDateRange / start must be earlier than finish</code></td><td>Check date order and keep <code>finish_date</code> ≤ yesterday.</td></tr>
+<tr><td><code>qty cannot be 0</code></td><td>Your sizing produced zero — check balance, price, and minimum order size.</td></tr>
+<tr><td>Significance test demands one route</td><td>Remove extra/data routes — RST accepts exactly one trading route.</td></tr>
+<tr><td>Import stuck on <code>running</code> with no worker</td><td>The worker died (e.g. server restart). Just start the import again — stored candles are kept.</td></tr></table>
+
+<h2 id="files">Where things live</h2>
+<table><tr><th>Path</th><th>What</th></tr>
+<tr><td><code>strategies/&lt;Name&gt;/__init__.py</code></td><td>Your strategies (start from <code>ExampleStrategy</code>)</td></tr>
+<tr><td><code>storage/logs/</code></td><td>Run logs; your feedback &amp; error reports land here too</td></tr>
+<tr><td><code>.env</code></td><td><code>PASSWORD</code>, ports, plus <code>MCP_USAGE_METER=local</code> free research credits</td></tr>
+<tr><td><code>docker/docker-compose.yml</code></td><td><code>docker compose up -d</code> / <code>stop</code> live here</td></tr></table>
+
+<footer><a href="/#/">← Back to dashboard</a> · Algorithex runs fully local — research engine based on open-source Algorithex (MIT), rebranded, no website dependency.</footer>
+</body>
+</html>

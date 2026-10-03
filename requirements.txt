@@ -1,0 +1,43 @@
+arrow~=1.2.1
+blinker~=1.4
+click~=8.0.3
+numpy~=1.26.4
+pandas~=2.2.3
+peewee~=3.14.8
+psycopg2-binary~=2.9.9
+pydash~=6.0.0
+fnc~=0.5.3
+# anyio (pulled in by fastapi) ships a pytest plugin that needs pytest>=7's
+# plugin API; pytest 6.x fails at import with "No module named '_pytest.scope'".
+pytest~=9.1.1
+requests~=2.32.0
+scipy~=1.15.0
+statsmodels~=0.14.4
+tabulate~=0.8.9
+timeloop~=1.0.2
+websocket-client~=1.8.0
+wsaccel~=0.6.6
+simplejson~=3.16.0
+aioredis~=1.3.1
+redis~=4.1.4
+fastapi~=0.128.0
+uvicorn~=0.40.0
+websockets>=10.0.0
+python-dotenv~=1.2.1
+aiofiles~=0.7.0
+PyJWT~=2.11.0
+cryptography~=42.0.5
+ecdsa>=0.16.0
+optuna~=4.2.0
+ray
+eth-account~=0.13.5
+msgpack~=1.1.0
+starkbank-ecdsa~=1.1.0
+# The native indicator kernel is built from source in native-kernel/ and the
+# per-platform binaries are vendored under algorithex/_native/bin/, so there is
+# no external native dependency to install.
+mcp==1.28.1
+joblib~=1.5.3
+scikit-learn~=1.7.2; python_version < "3.11"
+scikit-learn~=1.8.0; python_version >= "3.11"
+matplotlib~=3.10.3

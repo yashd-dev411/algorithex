@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="axg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A78BFA"/>
+      <stop offset="0.5" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="axp" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#E879F9"/>
+    </linearGradient>
+    <filter id="axglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- outer tech ring (hexagon with circuit cuts) -->
+  <g fill="none" stroke="url(#axg)" stroke-width="14" filter="url(#axglow)">
+    <path d="M256 34 L442 141 L442 355 L256 462 L70 355 L70 141 Z"/>
+  </g>
+  <g fill="url(#axg)">
+    <circle cx="256" cy="34" r="10"/>
+    <circle cx="442" cy="355" r="10"/>
+    <circle cx="70" cy="355" r="10"/>
+  </g>
+  <!-- angular A -->
+  <g filter="url(#axglow)">
+    <path d="M256 128 L168 384 L208 384 L256 232 L304 384 L344 384 Z" fill="url(#axg)"/>
+    <!-- pulse crossbar: trading heartbeat -->
+    <polyline points="196,318 232,318 248,286 268,344 284,306 316,306" fill="none" stroke="url(#axp)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- orbit dots -->
+  <circle cx="120" cy="120" r="7" fill="#22D3EE"/>
+  <circle cx="392" cy="120" r="7" fill="#A78BFA"/>
+</svg>

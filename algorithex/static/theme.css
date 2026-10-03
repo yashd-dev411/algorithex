@@ -1,0 +1,96 @@
+/* Algorithex premium theme overlay (additive: loads after the app CSS) */
+
+:root {
+  --ax-violet: #8B5CF6;
+  --ax-cyan: #22D3EE;
+  --ax-magenta: #E879F9;
+  --ui-primary: var(--ui-color-primary-500);
+  --ui-color-primary-50: #f5f1ff;
+  --ui-color-primary-100: #ede6fe;
+  --ui-color-primary-200: #dccdfd;
+  --ui-color-primary-300: #c3a6fa;
+  --ui-color-primary-400: #a978f5;
+  --ui-color-primary-500: #8B5CF6;
+  --ui-color-primary-600: #7c3aed;
+  --ui-color-primary-700: #6d28d9;
+  --ui-color-primary-800: #5b21b6;
+  --ui-color-primary-900: #4c1d95;
+  --ui-color-primary-950: #2e1065;
+  --ui-radius: .75rem;
+}
+
+.dark {
+  --ui-bg: #070A14;
+  --ui-bg-muted: #0B0F1E;
+  --ui-bg-elevated: #0E1428;
+  --ui-bg-accented: #141B36;
+  --ui-border: rgba(139, 92, 246, .22);
+  --ui-border-muted: rgba(139, 92, 246, .14);
+  --ui-border-accented: rgba(34, 211, 238, .35);
+}
+
+/* ambient aurora background: painted directly on body so no overlay,
+   pseudo-element, or stacking context can ever intercept clicks */
+body {
+  background-color: #070A14;
+  background-image:
+    radial-gradient(42rem 30rem at 12% -6%, rgba(139, 92, 246, .22), transparent 60%),
+    radial-gradient(40rem 30rem at 88% 4%, rgba(34, 211, 238, .16), transparent 60%),
+    radial-gradient(46rem 34rem at 50% 110%, rgba(232, 121, 249, .12), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  animation: ax-aurora 26s ease-in-out infinite alternate;
+}
+@keyframes ax-aurora {
+  0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  50% { background-position: 4% 3%, 96% 2%, 50% 97%; }
+  100% { background-position: 1% 5%, 99% 4%, 51% 100%; }
+}
+
+/* typography */
+body {
+  font-family: "Inter", "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+  text-rendering: optimizeLegibility;
+}
+::selection { background: rgba(139, 92, 246, .55); color: #fff; }
+
+/* primary buttons: gradient + glow */
+.bg-primary {
+  background-image: linear-gradient(135deg, #8B5CF6 0%, #6d28d9 55%, #0891b2 130%) !important;
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, .45), 0 6px 24px -6px rgba(139, 92, 246, .65), inset 0 1px 0 rgba(255, 255, 255, .25) !important;
+  transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+}
+.bg-primary:hover { filter: brightness(1.12); box-shadow: 0 0 0 1px rgba(167,139,250,.6), 0 8px 32px -6px rgba(34,211,238,.55), inset 0 1px 0 rgba(255,255,255,.3) !important; }
+.bg-primary:active { transform: translateY(1px) scale(.99); }
+
+/* elevated surfaces: glassy depth */
+.dark [class*="bg-elevated"], .dark [class*="bg-muted"] { backdrop-filter: saturate(1.15); }
+
+/* cards get a soft lift on hover (generic elevated panels) */
+.dark div[class*="rounded"][class*="border"] { transition: box-shadow .25s ease, border-color .25s ease; }
+
+/* focus visibility */
+:focus-visible { outline: 2px solid var(--ax-cyan) !important; outline-offset: 2px; border-radius: 6px; }
+
+/* scrollbars */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6d28d9, #0e7490);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+* { scrollbar-width: thin; scrollbar-color: #6d28d9 transparent; }
+
+/* numeric / tabular figures for a trading-desk feel */
+table, [class*="tabular"] { font-variant-numeric: tabular-nums; }
+
+/* status glow dots */
+[class*="animate-ping"] { filter: drop-shadow(0 0 6px var(--ax-cyan)); }
+
+@media (prefers-reduced-motion: reduce) {
+  body { animation: none; }
+  .bg-primary { transition: none; }
+}
