@@ -1,11 +1,23 @@
 <div align="center">
 <br>
 <p align="center">
-<img src="assets/algorithex-logo.png" alt="Algorithex" height="72" />
+<a href="assets/screenshots/01-dashboard-home.png"><img src="assets/algorithex-logo.svg" alt="Algorithex" height="76" /></a>
 </p>
 
 <p align="center">
-Algo-trading was 😵‍💫, we made it 🤩
+<strong>Backtest · Optimize · Validate · Trade — entirely on your own machine.</strong>
+</p>
+
+<p align="center">
+<a href="assets/screenshots/01-dashboard-home.png"><img src="assets/screenshots/01-dashboard-home.png" alt="The Algorithex dashboard running on localhost" width="820" /></a>
+</p>
+
+<p align="center">
+<a href="assets/screenshots/02-live-market.png"><img src="assets/screenshots/02-live-market.png" alt="Live market data from Binance and Bybit: candles, spread and order book" width="820" /></a>
+</p>
+
+<p align="center">
+<sub>Real screenshots of this build running on <code>localhost:9000</code> — not mockups.</sub>
 </p>
 </div>
 
@@ -517,13 +529,55 @@ fails when that happens, but the fix is to re-add the one line.
 
 ## Screenshots
 
-![Strategy editor and chart](assets/screenshots/strategy.jpg)
+Every image below was captured from **this build running on `localhost:9000`**.
+Nothing here is a mockup, a stock photo, or a screenshot of the upstream Jesse
+project — the inherited Jesse screenshots were removed rather than kept, because
+a screenshot of someone else's product in your README is a claim you did not
+earn.
 
-![Live trading mode](assets/screenshots/live-mode.jpg)
+### The dashboard
 
-![Optimize mode](assets/screenshots/optimize-mode.jpg)
+Signed in and idle. Navigation on the left, live-session state below.
 
-![QuantStats performance report](assets/screenshots/quantstats.png)
+![Algorithex dashboard home](assets/screenshots/01-dashboard-home.png)
+
+### Live market data — read-only, from real exchanges
+
+`/live` pulls public ticker, depth and kline data from **Binance** and
+**Bybit**. The panel above the chart is the same code mounted inside the
+dashboard's own Live page, so this feature is visible in two places without
+rebuilding the frontend.
+
+![Live market data from Binance with candles and a 20-level order book](assets/screenshots/02-live-market.png)
+
+The panel states its own limits in the footer: *no keys, no orders*. The module
+has no order-placement code path, no request signing, and no API-key handling.
+
+### The live panel inside the dashboard
+
+![The live market panel mounted inside the dashboard's Live page](assets/screenshots/03-live-overview.png)
+
+### Backtesting
+
+![Backtest configuration and results](assets/screenshots/04-backtest.png)
+
+### Optimization
+
+![Optimization run](assets/screenshots/05-optimization.png)
+
+### Monte Carlo
+
+![Monte Carlo analysis](assets/screenshots/06-monte-carlo.png)
+
+### Strategies
+
+![Strategy management](assets/screenshots/07-strategies.png)
+
+### The validation workbench
+
+`/validate` grades a strategy file before you risk money on it.
+
+![Strategy validation workbench](assets/screenshots/08-validate-workbench.png)
 
 ## Credits and License
 
