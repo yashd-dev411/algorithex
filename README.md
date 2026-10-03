@@ -1,23 +1,11 @@
 <div align="center">
 <br>
 <p align="center">
-<a href="assets/screenshots/01-dashboard-home.png"><img src="assets/algorithex-logo.svg" alt="Algorithex" height="76" /></a>
+<img src="assets/algorithex-logo.svg" alt="Algorithex" height="76" />
 </p>
 
 <p align="center">
-<strong>Backtest · Optimize · Validate · Trade — entirely on your own machine.</strong>
-</p>
-
-<p align="center">
-<a href="assets/screenshots/01-dashboard-home.png"><img src="assets/screenshots/01-dashboard-home.png" alt="The Algorithex dashboard running on localhost" width="820" /></a>
-</p>
-
-<p align="center">
-<a href="assets/screenshots/02-live-market.png"><img src="assets/screenshots/02-live-market.png" alt="Live market data from Binance and Bybit: candles, spread and order book" width="820" /></a>
-</p>
-
-<p align="center">
-<sub>Real screenshots of this build running on <code>localhost:9000</code> — not mockups.</sub>
+Backtest · Optimize · Validate · Trade — entirely on your own machine.
 </p>
 </div>
 
@@ -89,26 +77,17 @@ class GoldenCross(Strategy):
 ### Backtest
 Execute highly accurate and fast backtests without look-ahead bias. Utilize debugging logs, interactive charts with indicator support, and detailed performance metrics to validate your strategies thoroughly.
 
-![Backtest](https://raw.githubusercontent.com/algorithex/storage/refs/heads/master/backtest.gif)
-
 ### Interactive Trading Charts
 Inspect your strategy where its decisions happened. Algorithex combines candlesticks, strategy-added indicators and levels, executed orders, and completed trades in synchronized interactive charts. The same charting workflow is available for backtests and for running or completed paper/live sessions.
 
 
 Expand a trade to inspect every execution, collapse or isolate indicator panes, follow OHLC and indicator values under the cursor, reset the view, use fullscreen mode, or export the chart as an image.
 
-
-Explore Algorithex's interactive charts →
-
 ### Live/Paper Trading
 Deploy strategies live with robust monitoring tools. Supports paper trading, multiple accounts, real-time logs & notifications (Telegram, Slack, Discord), interactive charts, spot/futures, DEX, and a built-in code editor.
 
-![Live/Paper Trading](https://raw.githubusercontent.com/algorithex/storage/refs/heads/master/live.gif)
-
 ### Benchmark
 Accelerate research using the benchmark feature. Run batch backtests, compare across timeframes, symbols, and strategies. Filter and sort results by key performance metrics for efficient analysis.
-
-![Benchmark](https://raw.githubusercontent.com/algorithex/storage/refs/heads/master/benchmark.gif)
 
 ### Algorithex MCP: Your AI Assistant, Connected to Algorithex
 Algorithex includes a local Model Context Protocol (MCP) server. Connect your preferred AI assistant and let it work with Algorithex's real tools and project context instead of merely guessing how your trading framework behaves.
@@ -529,56 +508,26 @@ fails when that happens, but the fix is to re-add the one line.
 
 ## Screenshots
 
-Every image below was captured from **this build running on `localhost:9000`**.
-Nothing here is a mockup, a stock photo, or a screenshot of the upstream Jesse
-project — the inherited Jesse screenshots were removed rather than kept, because
-a screenshot of someone else's product in your README is a claim you did not
-earn.
+Captured from this build on `localhost:9000`. Click any image to open it full size.
 
-### The dashboard
-
-Signed in and idle. Navigation on the left, live-session state below.
-
-![Algorithex dashboard home](assets/screenshots/01-dashboard-home.png)
-
-### Live market data — read-only, from real exchanges
-
-`/live` is a standalone page: it pulls public ticker, depth and kline data from
-**Binance** and **Bybit** and renders it as a price chart beside a 20-level
-order book. The same panel is also mounted inside the dashboard's own Live
-page (next screenshot), so the feature is reachable both ways without
-rebuilding the frontend bundle.
-
-![Live market data from Binance with candles and a 20-level order book](assets/screenshots/02-live-market.png)
-
-The panel states its own limits in the footer: *no keys, no orders*. The module
-has no order-placement code path, no request signing, and no API-key handling.
-
-### The live panel inside the dashboard
-
-![The live market panel mounted inside the dashboard's Live page](assets/screenshots/03-live-overview.png)
-
-### Backtesting
-
-![Backtest configuration and results](assets/screenshots/04-backtest.png)
-
-### Optimization
-
-![Optimization run](assets/screenshots/05-optimization.png)
-
-### Monte Carlo
-
-![Monte Carlo analysis](assets/screenshots/06-monte-carlo.png)
-
-### Strategies
-
-![Strategy management](assets/screenshots/07-strategies.png)
-
-### The validation workbench
-
-`/validate` grades a strategy file before you risk money on it.
-
-![Strategy validation workbench](assets/screenshots/08-validate-workbench.png)
+<table>
+<tr>
+<td width="50%"><img src="assets/screenshots/01-dashboard-home.png" alt="Dashboard" /><br><sub>Dashboard</sub></td>
+<td width="50%"><img src="assets/screenshots/02-live-market.png" alt="Live market data" /><br><sub>Live market data — read-only, Binance &amp; Bybit</sub></td>
+</tr>
+<tr>
+<td><img src="assets/screenshots/03-live-overview.png" alt="Live panel in the dashboard" /><br><sub>Live panel inside the dashboard</sub></td>
+<td><img src="assets/screenshots/04-backtest.png" alt="Backtest" /><br><sub>Backtest</sub></td>
+</tr>
+<tr>
+<td><img src="assets/screenshots/05-optimization.png" alt="Optimization" /><br><sub>Optimization</sub></td>
+<td><img src="assets/screenshots/06-monte-carlo.png" alt="Monte Carlo" /><br><sub>Monte Carlo</sub></td>
+</tr>
+<tr>
+<td><img src="assets/screenshots/07-strategies.png" alt="Strategies" /><br><sub>Strategies</sub></td>
+<td><img src="assets/screenshots/08-validate-workbench.png" alt="Validation workbench" /><br><sub>Validation workbench</sub></td>
+</tr>
+</table>
 
 ## Credits and License
 
