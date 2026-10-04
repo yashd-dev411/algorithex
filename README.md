@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-Backtest · Optimize · Validate · Trade — entirely on your own machine.
+Backtest · Optimize · Validate · Analyze — entirely on your own machine.
 </p>
 </div>
 
@@ -13,20 +13,19 @@ Backtest · Optimize · Validate · Trade — entirely on your own machine.
 
 > **This is a fork of [Jesse](https://github.com/jesse-ai/jesse)**, the open-source crypto trading framework by Jesse Mir and contributors, released under the MIT License.
 >
-> Upstream is credited in [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). This fork rebrands the package to `algorithex`, removes the hosted-service dependencies so it runs fully self-hosted, and adds four new research modules described under [Research tooling](#research-tooling). All local branding, packaging, and Docker names use Algorithex.
+> Upstream is credited in [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). This fork rebrands the package to `algorithex`, removes the hosted-service dependencies so it runs fully self-hosted, and adds nine new research modules described under [Research tooling](#research-tooling). All local branding, packaging, and Docker names use Algorithex.
 
-A local, self-hosted trading framework. The Python package is `algorithex`.
-
----
-
-Algorithex is an advanced crypto trading framework that aims to **simplify** **researching** and defining **YOUR OWN trading strategies** for backtesting, optimizing, and paper trading — fully local, no website account needed.
+Algorithex is a crypto trading framework for researching, backtesting and defining **your own trading strategies** — fully local, no website account needed.
 
 ## What is Algorithex?
 Algorithex runs the Jesse research engine locally under your own brand: backtests, optimization, Monte Carlo, and rule significance tests without redirects or license tokens.
 
-## Why Algorithex?
-In short, Algorithex is more **accurate** than other solutions, and way more **simple**.
-In fact, it is so simple that in case you already know Python, you can get started today, in **matter of minutes**, instead of **weeks and months**. 
+## Why this fork?
+Three reasons, none of them marketing:
+
+- **It runs entirely on your machine.** No account, no license token, no redirect to someone else's site to reach a feature.
+- **The research tooling is new.** Walk-forward validation, regime detection, portfolio construction, attribution, robustness auditing, strategy ensembles, overfitting tests, execution algorithms and strategy certification are described under [Research tooling](#research-tooling). They are not part of upstream Jesse.
+- **The parts that were awkward to operate are the parts that got fixed.** Packaging, the `.env`-file contract, health checks, port mapping and CI are covered under [Deploying](#deploying).
 
 ## Key Features
 
@@ -50,12 +49,10 @@ In fact, it is so simple that in case you already know Python, you can get start
 - 🧠 **Machine Learning**: A built-in ML pipeline — gather labelled training data from backtests, train scikit-learn models (binary, multiclass, or regression), and deploy predictions directly inside your strategies.
 - 🧪 **Research API and Jupyter**: Run backtests, optimization, significance tests, Monte Carlo analysis, candle workflows, and machine learning from Python scripts or notebooks.
 - 🦀 **Rust-Powered Indicators**: Native Rust implementations make indicator-heavy strategies and large research runs substantially faster.
-- 🤖 **Reinforcement Learning — Coming Soon**: First-class reinforcement-learning workflows built on Algorithex's simulation and research stack are on the way.
-- 📺 **Youtube Channel**: Algorithex has a Youtube channel with screencast tutorials that go through example strategies step by step.
 
 ## Dive Deeper into Algorithex's Capabilities
 
-### Stupid Simple
+### Simple by design
 Craft complex trading strategies with remarkably simple Python. Access 300+ indicators, multi-symbol/timeframe support, spot/futures trading, partial fills, and risk management tools. Focus on logic, not boilerplate.
 
 ```python
@@ -80,7 +77,6 @@ Execute highly accurate and fast backtests without look-ahead bias. Utilize debu
 ### Interactive Trading Charts
 Inspect your strategy where its decisions happened. Algorithex combines candlesticks, strategy-added indicators and levels, executed orders, and completed trades in synchronized interactive charts. The same charting workflow is available for backtests and for running or completed paper/live sessions.
 
-
 Expand a trade to inspect every execution, collapse or isolate indicator panes, follow OHLC and indicator values under the cursor, reset the view, use fullscreen mode, or export the chart as an image.
 
 ### Live/Paper Trading
@@ -98,12 +94,10 @@ For example, you can ask:
 
 > Check whether my new entry rule is statistically significant, backtest it, optimize the promising parameters, and run a candles-based Monte Carlo analysis before we consider paper trading.
 
-Connect Claude, Codex, Cursor, VS Code, or Zed to Algorithex →
+Connect Claude, Codex, Cursor, VS Code, or Zed to Algorithex.
 
 ### Rule Significance Testing
 Before spending hours building and tuning a complete strategy, test whether its entry rule has a measurable historical edge. Algorithex compares the rule against a bootstrap distribution of random entries on the same market history, helping you reject noisy ideas early and focus your research on signals worth developing.
-
-Learn about Rule Significance Testing →
 
 ### Monte Carlo Analysis
 Stress-test your strategies beyond a single historical path. Algorithex's Monte Carlo mode runs hundreds of simulations using **trade-order shuffling** (tests whether trade timing drove your results) and **candles-based** (tests robustness under slightly different market conditions) methods. Use it to distinguish skill from luck, understand the range of outcomes you can realistically expect, and catch overfitting early.
@@ -245,7 +239,7 @@ print(d.deflated_sharpe, d.verdict)   # the Sharpe you should have believed
 
 #### Scheduled execution — `algorithex.execution.algos`
 
-Jesse fills an order at the next candle's close, minus a percentage. Real size does not print all at once.
+The engine fills an order at the next candle's close, minus a percentage. Real size does not print all at once.
 
 ```python
 from algorithex.execution.algos import ExecutionParams, is_optimal, compare_algorithms, simulate_execution
@@ -319,20 +313,13 @@ def should_long(self):
     return proba['long'] > 0.65
 ```
 
-Explore Algorithex's machine-learning pipeline →
-
 ### Research API and Jupyter Notebooks
 Everything does not have to happen through the dashboard. Algorithex's Research API exposes candle management, backtesting, optimization, Rule Significance Testing, Monte Carlo analysis, indicators, and machine learning to ordinary Python scripts and Jupyter notebooks. Use it for reproducible experiments, custom reports, batch research, or integration with your existing data-science workflow.
-
-Explore the Research API →
 
 ### Rust-Powered Performance
 Algorithex's indicators are powered by native Rust, making them significantly faster than common alternatives such as TA-Lib.
 
 The kernel is built from source in [`native-kernel/`](native-kernel) and the compiled binaries are **vendored**, so installing this package pulls in no external native dependency. Prebuilt binaries ship for Linux, Windows and macOS (Apple Silicon, `aarch64`, macOS 11.0 and later) and are built against the Python stable ABI, so one binary per platform serves CPython 3.10 and above. If you want to rebuild the macOS binary yourself, [`native-kernel/build-macos.sh`](native-kernel/build-macos.sh) cross-compiles from any host — no Mac or Xcode required.
-
-### Reinforcement Learning — Coming Soon
-We are working on first-class reinforcement-learning support built on Algorithex's simulation and research stack. The goal is to make training, evaluating, and deploying reinforcement-learning agents feel as integrated as Algorithex's existing backtesting, optimization, Monte Carlo, and machine-learning workflows.
 
 ### Optimize Your Strategies
 Unsure about optimal parameters? Let the optimization mode decide using simple syntax. Fine-tune any strategy parameter with the Optuna library and easy cross-validation.
